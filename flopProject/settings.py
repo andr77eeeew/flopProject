@@ -20,14 +20,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 'django-insecure-(%!w(_9ulk2$41^a4ew$+itx%70y&9v+)1njgb*(z5%+e*(94s'
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = False
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# ALLOWED_HOSTS = ['35.160.120.126', '44.233.151.27', '34.211.200.85']
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
 
 REST_FRAMEWORK = {
@@ -94,9 +91,6 @@ DATABASES = {
     }
 }
 database_url = os.environ.get('DATABASE_URL')
-# DATABASES['default'] = dj_database_url.parse(
-#     "postgres://flopbase_user:BWiroCFmmV40RZt0ACRNCV7VX5HGJBWB@dpg-cpm9betds78s73bivetg-a.frankfurt-postgres.render.com/flopbase")
-
 DATABASES['default'] = dj_database_url.parse(database_url)
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -133,11 +127,9 @@ USE_TZ = True
 # Настройки для статических файлов
 STATIC_URL = '/static/'
 
-if not DEBUG:
-    # Указываем Django копировать статические файлы в директорию `staticfiles` (это специфично для Render)
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
-    # Включаем WhiteNoise для сжатия статических файлов и долгосрочного кеширования
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
