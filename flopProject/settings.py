@@ -85,11 +85,14 @@ WSGI_APPLICATION = 'flopProject.wsgi:application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('postgres://flopbase_user:BWiroCFmmV40RZt0ACRNCV7VX5HGJBWB@dpg-cpm9betds78s73bivetg-a.frankfurt-postgres.render.com/flopbase')
-    )
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / 'db.sqlite3',
+    }
 }
 
+DATABASES['default'] = dj_database_url.parse(
+    "postgres://flopbase_user:BWiroCFmmV40RZt0ACRNCV7VX5HGJBWB@dpg-cpm9betds78s73bivetg-a.frankfurt-postgres.render.com/flopbase")
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
