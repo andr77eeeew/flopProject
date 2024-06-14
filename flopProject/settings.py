@@ -65,7 +65,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',
-    'https://floptropika.onrender.com/'
+    'floptropika.onrender.com/',
 ]
 
 ROOT_URLCONF = 'flopProject.urls'
