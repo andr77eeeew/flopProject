@@ -91,7 +91,7 @@ WSGI_APPLICATION = 'flopProject.wsgi:application'
 DATABASES = {
     'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgres://flopbase_user:BWiroCFmmV40RZt0ACRNCV7VX5HGJBWB@dpg-cpm9betds78s73bivetg-a/flopbase',
+        default='postgres://flopbase_user:BWiroCFmmV40RZt0ACRNCV7VX5HGJBWB@dpg-cpm9betds78s73bivetg-a.frankfurt-postgres.render.com/flopbase',
         conn_max_age=600
     )
 }
