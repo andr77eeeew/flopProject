@@ -21,11 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
+# SECRET_KEY = "YJa12C4pL/Z2WDPt5Xm8KEI/s4wdiHOuegjFApq9uV0="
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+# DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
+# ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -48,8 +53,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'index',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -85,7 +92,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'flopProject.wsgi:application'
+WSGI_APPLICATION = 'flopProject.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -96,8 +103,10 @@ DATABASES = {
         "NAME": BASE_DIR / 'db.sqlite3',
     }
 }
+
 database_url = os.environ.get('DATABASE_URL')
-DATABASES['default'] = dj_database_url.parse(database_url)
+
+# DATABASES['default'] = dj_database_url.parse("postgres://superbase_d350_user:yQMYXa6SVSkMsTrouGBKBVP4yRNbu4fE@dpg-cpmvgldds78s73aocp00-a.frankfurt-postgres.render.com/superbase_d350")
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
