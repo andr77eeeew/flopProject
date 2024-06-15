@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate, get_user_model, login
 from django.http import JsonResponse
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -39,4 +39,4 @@ class LoginView(generics.GenericAPIView):
         # Установка токена в куку
         response = Response({'token': token.key})
         response.set_cookie('token', token.key, max_age=3600, httponly=True)  # Например, срок действия 1 час
-        return response
+        return response, user
