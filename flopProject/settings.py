@@ -106,7 +106,7 @@ DATABASES = {
 
 database_url = os.environ.get('DATABASE_URL')
 
-# DATABASES['default'] = dj_database_url.parse("postgres://superbase_d350_user:yQMYXa6SVSkMsTrouGBKBVP4yRNbu4fE@dpg-cpmvgldds78s73aocp00-a.frankfurt-postgres.render.com/superbase_d350")
+DATABASES['default'] = dj_database_url.parse(database_url)
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
