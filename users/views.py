@@ -36,7 +36,16 @@ class LoginView(generics.GenericAPIView):
         # Создание или получение токена
         token, created = Token.objects.get_or_create(user=user)
 
+        # Возвращаем токен и данные пользователя
+        response = Response({
+            'token': token.key,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+            }
+        })
+
         # Установка токена в куку
-        response = Response({'token': token.key, 'user': user})
         response.set_cookie('token', token.key, max_age=3600, httponly=True)  # Например, срок действия 1 час
         return response
