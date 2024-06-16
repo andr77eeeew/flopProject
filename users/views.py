@@ -74,7 +74,7 @@ def get_csrf_token(request):
 
 
 class UserDetailView(APIView):
-    permission_classes = [JWTAuthentication, TokenAuthentication, IsAuthenticated]
+    permission_classes = [JWTAuthentication,]
 
     def get(self, request):
         serializer = UserSerializer(request.user)
