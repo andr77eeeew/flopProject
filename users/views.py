@@ -37,8 +37,8 @@ class LoginView(TokenObtainPairView):
         refresh = RefreshToken.for_user(user)
         response = Response({
             'user': UserSerializer(user).data,
-            'refresh': refresh,
-            'access': refresh.access_token
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
         })
         response.set_cookie('access', str(refresh.access_token), httponly=True, secure=False)
         response.set_cookie('refresh', str(refresh), httponly=True, secure=False)
