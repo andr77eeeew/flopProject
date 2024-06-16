@@ -45,5 +45,5 @@ class LoginView(generics.GenericAPIView):
                 'email': user.email,
             }
         })
-        response.set_cookie('token', token.key, max_age=3600, httponly=True)  # Например, срок действия 1 час
+        response.set_cookie('token', token.key, max_age=3600, httponly=True, path='/')  # Например, срок действия 1 час
         return response
