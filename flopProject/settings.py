@@ -34,9 +34,6 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
 AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
@@ -64,9 +61,9 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-    'AUTH_COOKIE': 'access',  # Имя куки для хранения access токена
-    'AUTH_COOKIE_REFRESH': 'refresh',  # Имя куки для хранения refresh токена
-    'AUTH_COOKIE_SECURE': False,  # Установите в True на продакшене
+    'AUTH_COOKIE': 'access',
+    'AUTH_COOKIE_REFRESH': 'refresh',
+    'AUTH_COOKIE_SECURE': False,
     'AUTH_COOKIE_HTTP_ONLY': True,
     'AUTH_COOKIE_PATH': '/',
     'AUTH_COOKIE_SAMESITE': 'Lax',
@@ -112,6 +109,19 @@ MIDDLEWARE = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers',
+    'HTTP_AUTHORIZATION',
+]
+
 ROOT_URLCONF = 'flopProject.urls'
 
 TEMPLATES = [
@@ -144,8 +154,8 @@ DATABASES = {
 }
 
 database_url = os.environ.get('DATABASE_URL')
-
 DATABASES['default'] = dj_database_url.parse(database_url)
+
 # DATABASES['default'] = dj_database_url.parse("postgres://superbase_d350_user:yQMYXa6SVSkMsTrouGBKBVP4yRNbu4fE@dpg-cpmvgldds78s73aocp00-a.frankfurt-postgres.render.com/superbase_d350")
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
