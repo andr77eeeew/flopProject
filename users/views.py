@@ -1,49 +1,72 @@
-from django.contrib.auth import authenticate, get_user_model, login
-from django.http import JsonResponse
-from rest_framework import generics, permissions, status
-from rest_framework.authtoken.models import Token
+from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from users.serializers import UserSerializer, LoginSerializer
-import logging
-
-logger = logging.getLogger(__name__)
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+from users.models import User  # Импортируйте вашу модель пользователя
+from users.serializers import UserSerializer, RegisterSerializer, LoginSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 class RegisterView(generics.CreateAPIView):
-    queryset = get_user_model().objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (permissions.AllowAny,)
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        response = Response({
+            'user': UserSerializer(user, context=self.get_serializer_context()).data,
+        })
+        response.set_cookie('access', str(refresh.access_token), httponly=True, secure=False)
+        response.set_cookie('refresh', str(refresh), httponly=True, secure=False)
+        return response
 
-class LoginView(generics.GenericAPIView):
-    permission_classes = (permissions.AllowAny,)
+class LoginView(TokenObtainPairView):
+    permission_classes = (AllowAny,)
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
-
-        logger.debug(f'Attempting login for user: {username}')
-
-        user = authenticate(request, username=username, password=password)
-        if not user:
-            logger.warning(f'Failed login attempt for user: {username}')
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        login(request, user)
-        logger.info(f'User authenticated successfully: {user}')
-
-        # Создание или получение токена
-        token, created = Token.objects.get_or_create(user=user)
-
-        # Установка токена в куку
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
         response = Response({
-            'token': token.key,
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-            }
+            'user': UserSerializer(user).data,
         })
-        response.set_cookie('token', token.key, max_age=3600, httponly=True, path='/')  # Например, срок действия 1 час
+        response.set_cookie('access', str(refresh.access_token), httponly=True, secure=False)
+        response.set_cookie('refresh', str(refresh), httponly=True, secure=False)
         return response
+
+class LogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        try:
+            refresh_token = request.COOKIES.get('refresh')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+                response = Response(status=status.HTTP_205_RESET_CONTENT)
+                response.delete_cookie('access')
+                response.delete_cookie('refresh')
+                return response
+            else:
+                return Response({"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+def get_csrf_token(request):
+    csrf_token = get_token(request)
+    return JsonResponse({'csrfToken': csrf_token})
+
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
