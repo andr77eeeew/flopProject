@@ -1,3 +1,4 @@
+from django.contrib.auth import login
 from rest_framework import generics, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
@@ -38,6 +39,7 @@ class LoginView(TokenObtainPairView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
+        login(request, user)
         refresh = RefreshToken.for_user(user)
         response = Response({
             'user': UserSerializer(user).data,
