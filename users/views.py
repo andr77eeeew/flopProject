@@ -75,7 +75,7 @@ def get_csrf_token(request):
     return JsonResponse({'csrfToken': csrf_token})
 
 
-class UserDetailView(APIView):
+class UserDetailView(generics.RetrieveAPIView):
     authentication_classes = [JWTAuthentication,]
     permission_classes = [IsAuthenticated,]
 
