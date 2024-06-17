@@ -21,15 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
-# SECRET_KEY = "YJa12C4pL/Z2WDPt5Xm8KEI/s4wdiHOuegjFApq9uV0="
+
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-# DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
+# SECRET_KEY = "YJa12C4pL/Z2WDPt5Xm8KEI/s4wdiHOuegjFApq9uV0="
+# DEBUG = True
 # ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+SECRET_KEY = os.environ.get('SECRET_KEY')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -102,7 +105,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'index',
-    'users'
+    'users',
+    'floplegends'
 ]
 
 MIDDLEWARE = [
@@ -162,12 +166,12 @@ DATABASES = {
         "NAME": BASE_DIR / 'db.sqlite3',
     }
 }
-
+#
 database_url = os.environ.get('DATABASE_URL')
 DATABASES['default'] = dj_database_url.parse(database_url)
 
 # DATABASES['default'] = dj_database_url.parse("postgres://superbase_d350_user:yQMYXa6SVSkMsTrouGBKBVP4yRNbu4fE@dpg-cpmvgldds78s73aocp00-a.frankfurt-postgres.render.com/superbase_d350")
-# Password validation
+# Password validations
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [

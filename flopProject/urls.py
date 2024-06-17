@@ -30,6 +30,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     path('api/', include('users.urls')),
+    path('flop/', include('floplegends.urls')),
 ]
 
 urlpatterns += static_and_media_urls
