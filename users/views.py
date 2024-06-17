@@ -55,17 +55,20 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated, ]
 
     def post(self, request):
-        refresh_token = request.COOKIES.get('refresh')
-        if refresh_token:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-            logout(request)
-            response = Response(status=status.HTTP_205_RESET_CONTENT)
-            response.delete_cookie('access')
-            response.delete_cookie('refresh')
-            return response
-        else:
-            return Response({"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        access_token = request.headers.get('Authorization')
+        if not access_token:
+            return Response({"detail": "Access token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({"detail": "Refresh token is required in the payload."}, status=status.HTTP_400_BAD_REQUEST)
+
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        response = Response(status=status.HTTP_205_RESET_CONTENT)
+        response.delete_cookie('access')
+        response.delete_cookie('refresh')
+        return response
 
 
 def get_csrf_token(request):
