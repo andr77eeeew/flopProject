@@ -29,7 +29,7 @@ static_and_media_urls = [
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
-    path('users/', include('users.urls')),
+    path('api/', include('users.urls')),
 ]
 
 urlpatterns += static_and_media_urls

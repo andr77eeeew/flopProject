@@ -35,8 +35,6 @@ AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ]
 }
@@ -57,22 +55,33 @@ SIMPLE_JWT = {
     'LEEWAY': 0,
     'REST_USE_JWT': True,
 
-    'AUTH_HEADER_TYPES': ('JWT',),
-    'AUTH_HEADER_NAME': 'Authorization',
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',)
+    ,
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
     'AUTH_COOKIE': 'access',
     'AUTH_COOKIE_REFRESH': 'refresh',
     'AUTH_COOKIE_SECURE': False,
     'AUTH_COOKIE_HTTP_ONLY': True,
     'AUTH_COOKIE_PATH': '/',
+    'AUTH_COOKIE_DOMAIN': None,
     'AUTH_COOKIE_SAMESITE': 'Lax',
-
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-
-    'JTI_CLAIM': 'jti',
+    'AUTH_COOKIE_CSRF': False,
+    'AUTH_COOKIE_SECRET': None,
+    'AUTH_COOKIE_STORE': None,
+    'AUTH_COOKIE_REMEMBER': False,
+    'AUTH_COOKIE_EXPIRE': None,
+    'AUTH_COOKIE_NAME': 'jwt-auth',
+    'AUTH_COOKIE_REMEMBER_NAME': 'jwt-auth-remember',
+    'AUTH_COOKIE_REMEMBER_SECONDS': 60 * 60 * 24 * 7 * 2,
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
