@@ -83,3 +83,19 @@ class UserDetailView(generics.RetrieveAPIView):
     def get(self, request, **kwargs):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class UpdateProfileView(generics.RetrieveUpdateAPIView):
+    authentication_classes = [JWTAuthentication, ]
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def perform_update(self, request):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
