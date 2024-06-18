@@ -95,9 +95,9 @@ class UpdateProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-    def perform_update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer = self.get_serializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
