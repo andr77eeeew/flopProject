@@ -8,7 +8,7 @@ class flopLegendsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = flopLegendsModel
-        fields = ['id', 'title', 'description', 'creator', 'creator_username', 'creator_avatar']
+        fields = ['id', 'title', 'description', 'cover', 'creator', 'creator_username', 'creator_avatar']
 
     def get_creator_username(self, obj):
         return obj.creator.username
@@ -21,7 +21,7 @@ class flopLegendsSerializer(serializers.ModelSerializer):
 class CreateflopLegendsSerializer(serializers.ModelSerializer):
     class Meta:
         model = flopLegendsModel
-        fields = ('title', 'description', 'creator')
+        fields = ('title', 'description', 'cover', 'creator')
         extra_kwargs = {'creator': {'required': True}}
 
     def create(self, validated_data):
@@ -29,6 +29,7 @@ class CreateflopLegendsSerializer(serializers.ModelSerializer):
         flop = flopLegendsModel.objects.create(
             title=validated_data['title'],
             description=validated_data['description'],
+            cover=validated_data['cover'],
             creator=creator
         )
         return flop
