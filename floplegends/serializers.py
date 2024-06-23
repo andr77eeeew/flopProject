@@ -26,10 +26,11 @@ class CreateflopLegendsSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         creator = validated_data.pop('creator')
+        cover = validated_data.pop('cover')
         flop = flopLegendsModel.objects.create(
             title=validated_data['title'],
             description=validated_data['description'],
-            cover=validated_data['cover'],
+            cover=cover,
             creator=creator
         )
         return flop
