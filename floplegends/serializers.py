@@ -2,18 +2,20 @@ from rest_framework import serializers
 from .models import flopLegendsModel
 
 
-
-
-
 class flopLegendsSerializer(serializers.ModelSerializer):
     creator_username = serializers.SerializerMethodField()
+    creator_avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = flopLegendsModel
-        fields = ['id', 'title', 'description', 'creator', 'creator_username']
+        fields = ['id', 'title', 'description', 'creator', 'creator_username', 'creator_avatar']
 
     def get_creator_username(self, obj):
         return obj.creator.username
+
+    def get_creator_avatar(self, obj):
+        if obj.creator.avatar:
+            return obj.creator.avatar.url
 
 
 class CreateflopLegendsSerializer(serializers.ModelSerializer):
