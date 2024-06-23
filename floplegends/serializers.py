@@ -21,8 +21,8 @@ class flopLegendsSerializer(serializers.ModelSerializer):
 class CreateflopLegendsSerializer(serializers.ModelSerializer):
     class Meta:
         model = flopLegendsModel
-        fields = ('title', 'description', 'cover', 'creator')
-        extra_kwargs = {'creator': {'required': True}}
+        fields = ('title', 'description', 'cover')
+        extra_kwargs = {'creator': {'required': False}}
 
     def create(self, validated_data):
         creator = validated_data.pop('creator')
