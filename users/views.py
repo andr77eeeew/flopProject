@@ -83,8 +83,8 @@ class UserDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, ]
 
     def get(self, request, **kwargs):
-        user_id = request.user.id
-        return redirect('profile', user_id=user_id)
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
 
 
 class PublicProfileView(generics.RetrieveAPIView):
@@ -96,10 +96,6 @@ class PublicProfileView(generics.RetrieveAPIView):
         user = User.objects.get(id=user_id)
         serializer = self.get_serializer(user)
         return Response(serializer.data)
-
-    def get_object(self):
-        user_id = self.kwargs.get('user_id')
-        return User.objects.get(id=user_id)
 
 class UpdateProfileView(generics.RetrieveUpdateAPIView):
     authentication_classes = [JWTAuthentication, ]
