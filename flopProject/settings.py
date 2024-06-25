@@ -94,6 +94,8 @@ SIMPLE_JWT = {
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+    'flopChat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -104,12 +106,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    'channels',
     'storages',
-    'index',
     'users',
     'floplegends',
-    'flopChat',
 ]
 
 MIDDLEWARE = [
@@ -158,7 +157,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'flopProject.wsgi.application'
+# WSGI_APPLICATION = 'flopProject.wsgi.application'
 
 ASGI_APPLICATION = 'flopProject.asgi.application'
 
@@ -166,7 +165,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [(os.environ.get('REDIS_URL'), 6379)],
+            "hosts": [os.environ.get('REDIS_URL'), 6379],
         },
     },
 }
@@ -236,7 +235,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
