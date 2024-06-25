@@ -158,7 +158,7 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'flopProject.wsgi.application'
+WSGI_APPLICATION = 'flopProject.wsgi.application'
 
 ASGI_APPLICATION = 'flopProject.asgi.application'
 
@@ -166,7 +166,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis://red-cptgvclds78s73dv65ig:6379', 6379)],
+            "hosts": [(os.environ.get('REDIS_URL'), 6379)],
         },
     },
 }
@@ -237,8 +237,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
 AWS_STORAGE_BUCKET_NAME = 'flopbucked'
 AWS_S3_SIGNATURE_NAME = 's3v4',
 AWS_S3_REGION_NAME = 'eu-central-1'
