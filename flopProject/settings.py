@@ -104,10 +104,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'channels',
     'storages',
     'index',
     'users',
-    'floplegends'
+    'floplegends',
+    'flopChat',
 ]
 
 MIDDLEWARE = [
@@ -156,7 +158,18 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'flopProject.wsgi.application'
+# WSGI_APPLICATION = 'flopProject.wsgi.application'
+
+ASGI_APPLICATION = 'flopProject.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('redis://red-cptgvclds78s73dv65ig:6379', 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -171,7 +184,8 @@ DATABASES = {
 database_url = os.environ.get('DATABASE_URL')
 DATABASES['default'] = dj_database_url.parse(database_url)
 
-# DATABASES['default'] = dj_database_url.parse("postgres://superbase_d350_user:yQMYXa6SVSkMsTrouGBKBVP4yRNbu4fE@dpg-cpmvgldds78s73aocp00-a.frankfurt-postgres.render.com/superbase_d350")
+# DATABASES['default'] = dj_database_url.parse(
+#     'postgresql://cors:WDysXmNcUaZrfBAkQ9tlrM0Hff1VE2ot@dpg-cps99ag8fa8c7393o340-a.frankfurt-postgres.render.com/dom_diarei_slutiii')
 # Password validations
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -223,7 +237,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#123
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = 'flopbucked'
