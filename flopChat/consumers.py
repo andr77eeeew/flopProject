@@ -1,6 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = 'room_name'
@@ -18,8 +19,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-
-    async def recive(self, text_data):
+    async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
