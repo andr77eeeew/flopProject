@@ -91,6 +91,13 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
+import redis
+
+rararara = redis.Redis(
+  host='redis-15182.c328.europe-west3-1.gce.redns.redis-cloud.com',
+  port=15182,
+  password='gH50P9rrioEz3U3BgHVyApYu7zw0sEES')
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -158,14 +165,17 @@ TEMPLATES = [
 ]
 
 # WSGI_APPLICATION = 'flopProject.wsgi.application'
-
 ASGI_APPLICATION = 'flopProject.asgi.application'
+
+
+# КТО ТРОНЕТ У ТОГО ОТВАЛИТСЯ ХУЙ
+redis_url = "redis://:gH50P9rrioEz3U3BgHVyApYu7zw0sEES@redis-15182.c328.europe-west3-1.gce.redns.redis-cloud.com:15182/0"
 
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [os.environ.get('REDIS_URL'), 6379],
+            "hosts": [redis_url],
         },
     },
 }
