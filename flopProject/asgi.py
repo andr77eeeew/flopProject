@@ -12,7 +12,7 @@ import django
 from pathlib import Path
 
 # Укажите путь к вашему файлу settings.py
-django_settings_module = "flopProject.settings"
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'flopProject.settings')
 
 # Загрузка приложений Django
 django.setup()
