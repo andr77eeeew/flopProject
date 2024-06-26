@@ -1,6 +1,7 @@
 import json
 
 from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from .models import MessageModel
@@ -54,11 +55,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         recipient_username = text_data_json['recipient_username']
 
         if message and sender_username and recipient_username:
-            sender = sync_to_async(User.objects.get(username=sender_username))
-            recipient = sync_to_async(User.objects.get(username=recipient_username))
+            sender = await self.get_user(sender_username)
+            recipient = await self.get_user(recipient_username)
 
-            msg = MessageModel(sender=sender, recipient=recipient, content=message)
-            sync_to_async(msg.save())
+            await self.save_message(sender, recipient, message)
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -71,6 +71,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 }
             )
 
+    @database_sync_to_async
+    def get_user(self, username):
+        return User.objects.get(username=username)
+
+    @database_sync_to_async
+    def save_message(self, sender, recipient, content):
+        return MessageModel.objects.create(sender=sender, recipient=recipient, content=content)
+
     async def chat_message(self, event):
         message = event['message']
         sender = event['sender_username']
@@ -81,3 +89,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'recipient': recipient
         }))
+
+
