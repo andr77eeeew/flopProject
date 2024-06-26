@@ -102,7 +102,6 @@ rararara = redis.Redis(
 
 INSTALLED_APPS = [
     'channels',
-    'flopChat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -116,6 +115,7 @@ INSTALLED_APPS = [
     'storages',
     'users',
     'floplegends',
+    'flopChat',
 ]
 
 MIDDLEWARE = [
@@ -249,6 +249,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+
 
 AWS_STORAGE_BUCKET_NAME = 'flopbucked'
 AWS_S3_SIGNATURE_NAME = 's3v4',
