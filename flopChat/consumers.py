@@ -19,7 +19,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        text_data_json = json.loads(self.scope['text_data'])
+        text_data_json = json.loads('text_data')
         sender = text_data_json['sender']
         recipient = text_data_json['recipient']
 
