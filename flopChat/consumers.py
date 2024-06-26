@@ -54,8 +54,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         recipient = text_data_json['recipient']
 
         if message and sender and recipient:
-            sender = await sync_to_async(User.objects.get(username=sender.username))
-            recipient = await sync_to_async(User.objects.get(username=recipient.username))
+            sender = await sync_to_async(User.objects.get(username=sender))
+            recipient = await sync_to_async(User.objects.get(username=recipient))
 
             msg = MessageModel(sender=sender, recipient=recipient, content=message)
             await sync_to_async(msg.save())
