@@ -91,12 +91,6 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-import redis
-
-rararara = redis.Redis(
-  host='redis-15182.c328.europe-west3-1.gce.redns.redis-cloud.com',
-  port=15182,
-  password='gH50P9rrioEz3U3BgHVyApYu7zw0sEES')
 
 # Application definition
 
@@ -116,6 +110,7 @@ INSTALLED_APPS = [
     'users',
     'floplegends',
     'flopChat',
+
 ]
 
 MIDDLEWARE = [
@@ -164,7 +159,8 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'flopProject.wsgi.application'
+WSGI_APPLICATION = 'flopProject.wsgi.application'
+
 ASGI_APPLICATION = 'flopProject.asgi.application'
 
 
@@ -249,7 +245,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-
 
 
 AWS_STORAGE_BUCKET_NAME = 'flopbucked'

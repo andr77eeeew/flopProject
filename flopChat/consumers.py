@@ -22,7 +22,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = self.scope['sender']
         recipient = self.scope['recipient']
 
-        messages = await sync_to_async(MessageModel.objects.filter)(sender=sender,recipient=recipient) | await sync_to_async(MessageModel.objects.filter)(sender=recipient, recipient=sender)
+        messages = await sync_to_async(MessageModel.objects.filter(sender=sender,recipient=recipient)) | await sync_to_async(MessageModel.objects.filter(sender=recipient, recipient=sender))
         for message in messages:
             await self.send(text_data=json.dumps({
                 'message': message.content,
@@ -44,11 +44,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         recipient_username = text_data_json['recipient_username']
 
         if message and sender_username and recipient_username:
-            sender = await sync_to_async(User.objects.get)(username=sender_username)
-            recipient = await sync_to_async(User.objects.get)(username=recipient_username)
+            sender = await sync_to_async(User.objects.get(username=sender_username))
+            recipient = await sync_to_async(User.objects.get(username=recipient_username))
 
             msg = MessageModel(sender=sender, recipient=recipient, content=message)
-            await sync_to_async(msg.save)()
+            await sync_to_async(msg.save())
 
             await self.channel_layer.group_send(
                 self.room_group_name,

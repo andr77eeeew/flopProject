@@ -8,13 +8,19 @@ https://docs.djangoproject.com/en/5.0/howto/deployment/asgi/
 """
 
 import os
+import django
+from pathlib import Path
 
-from django.core.asgi import get_asgi_application
+# Укажите путь к вашему файлу settings.py
+django_settings_module = "flopProject.settings"
+
+# Загрузка приложений Django
+django.setup()
+
 from channels.routing import ProtocolTypeRouter, URLRouter
+from django.core.asgi import get_asgi_application
 from channels.auth import AuthMiddlewareStack
 import flopChat.routing
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'flopProject.settings')
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
