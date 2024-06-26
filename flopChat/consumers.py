@@ -1,6 +1,5 @@
 import json
 
-from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
@@ -77,7 +76,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_message(self, sender, recipient, content):
-        return MessageModel.objects.create(sender=sender, recipient=recipient, content=content)
+        return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
     async def chat_message(self, event):
         message = event['message']
