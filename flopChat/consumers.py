@@ -19,17 +19,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        sender = self.scope['sender']
-        recipient = self.scope['recipient']
-
-        messages = await sync_to_async(MessageModel.objects.filter(sender=sender,recipient=recipient)) | await sync_to_async(MessageModel.objects.filter(sender=recipient, recipient=sender))
-        for message in messages:
-            await self.send(text_data=json.dumps({
-                'message': message.content,
-                'sender': message.sender.username,
-                'avatar': message.sender.avatar.url,
-                'recipient': message.recipient.username
-            }))
+        # sender = self.scope['sender']
+        # recipient = self.scope['recipient']
+        #
+        # messages = await sync_to_async(MessageModel.objects.filter(sender=sender,recipient=recipient)) | await sync_to_async(MessageModel.objects.filter(sender=recipient, recipient=sender))
+        # for message in messages:
+        #     await self.send(text_data=json.dumps({
+        #         'message': message.content,
+        #         'sender': message.sender.username,
+        #         'avatar': message.sender.avatar.url,
+        #         'recipient': message.recipient.username
+        #     }))
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
