@@ -57,8 +57,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender = await self.get_user(sender_username)
             recipient = await self.get_user(recipient_username)
 
-            await self.save_message(sender, recipient, message)
-
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -69,6 +67,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'recipient': recipient.username
                 }
             )
+
+            await self.save_message(sender, recipient, message)
 
     @database_sync_to_async
     def get_user(self, username):
