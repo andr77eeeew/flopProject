@@ -50,15 +50,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
-        sender = text_data_json['sender']
-        recipient = text_data_json['recipient']
+        sender_username = text_data_json['sender_username']
+        recipient_username = text_data_json['recipient_username']
 
-        if message and sender and recipient:
-            sender = await sync_to_async(User.objects.get(username=sender))
-            recipient = await sync_to_async(User.objects.get(username=recipient))
+        if message and sender_username and recipient_username:
+            sender = sync_to_async(User.objects.get(username=sender_username))
+            recipient = sync_to_async(User.objects.get(username=recipient_username))
 
             msg = MessageModel(sender=sender, recipient=recipient, content=message)
-            await sync_to_async(msg.save())
+            sync_to_async(msg.save())
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -73,8 +73,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         message = event['message']
-        sender = event['sender']
-        recipient = event['recipient']
+        sender = event['sender_username']
+        recipient = event['recipient_username']
 
         await self.send(text_data=json.dumps({
             'message': message,
