@@ -29,12 +29,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message_type = text_data_json['type']
 
-        if message_type == 'get_users':
-            sender_user = text_data_json['sender']
-            recipient_user = text_data_json['recipient']
+        sender_user = text_data_json['sender']
+        recipient_user = text_data_json['recipient']
 
-            sender = await self.get_user(sender_user)
-            recipient = await self.get_user(recipient_user)
+        sender = await self.get_user(sender_user)
+        recipient = await self.get_user(recipient_user)
+
+        if message_type == 'get_users':
+
             messages = await self.get_messages(sender, recipient)
 
             for message in messages:
@@ -45,14 +47,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'recipient': message.recipient.username
                 }))
         elif message_type == 'chat_message':
-
             message = text_data_json['message']
-            sender_username = text_data_json['sender']
-            recipient_username = text_data_json['recipient']
 
-            if message and sender_username and recipient_username:
-                sender = await self.get_user(sender_username)
-                recipient = await self.get_user(recipient_username)
+            if message and sender_user and recipient_user:
 
                 await self.channel_layer.group_send(
                     self.room_group_name,
@@ -92,5 +89,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'avatar': avatar,
             'recipient': recipient
         }))
-
-
