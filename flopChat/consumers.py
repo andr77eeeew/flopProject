@@ -10,7 +10,6 @@ from users.models import User
 # Настройка логгера
 logger = logging.getLogger(__name__)
 
-
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -74,19 +73,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_user(self, username):
+        logger.info(f"Fetching user: {username}")
         return User.objects.get(username=username)
 
     @database_sync_to_async
     def save_message(self, sender, recipient, content):
+        logger.info(f"Saving message from {sender} to {recipient}: {content}")
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
     @database_sync_to_async
     def fetch_messages(self, sender, recipient):
-        query = MessageModel.objects.filter(
-            (Q(sender=sender) & Q(receiver=recipient)) |
-            (Q(sender=recipient) & Q(receiver=sender))
-        )
-        return list(query)
+        logger.info(f"Fetching messages between {sender} and {recipient}")
+        try:
+            messages = list(MessageModel.objects.filter(
+                (Q(sender=sender) & Q(receiver=recipient)) |
+                (Q(sender=recipient) & Q(receiver=sender))
+            ))
+            logger.info(f"Fetched {len(messages)} messages")
+            return messages
+        except Exception as e:
+            logger.error(f"Error fetching messages: {e}")
+            return []
 
     async def chat_message(self, event):
         message = event['message']
