@@ -1,7 +1,9 @@
 import json
 
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.db.models import Q
 
 from .models import MessageModel
 from users.models import User
@@ -40,12 +42,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             messages = await self.fetch_messages(sender, recipient)
 
             for message in messages:
-                # await self.send(text_data=json.dumps({
-                #     'message': message.content,
-                #     'sender': message.sender.username,
-                #     'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
-                #     'recipient': message.recipient.username
-                # }))
                 await self.chat_message({
                     'message': message.content,
                     'sender': message.sender.username,
@@ -80,7 +76,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def fetch_messages(self, sender, recipient):
-        return MessageModel.objects.filter(sender=sender, receiver=recipient) | MessageModel.objects.filter(sender=recipient, receiver=sender)
+        query = MessageModel.objects.filter(
+            (Q(sender=sender) & Q(receiver=recipient)) |
+            (Q(sender=recipient) & Q(receiver=sender))
+        )
+        return query
 
     async def chat_message(self, event):
         message = event['message']
