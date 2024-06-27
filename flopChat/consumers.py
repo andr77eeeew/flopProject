@@ -19,27 +19,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # if 'text_data' in self.scope:
-        #     try:
-        #         text_data_json = json.loads(self.scope['text_data'])
-        #         sender_username = text_data_json['sender']
-        #         recipient_username = text_data_json['recipient']
-        #
-        #         messages = await self.get_messages(sender_username, recipient_username)
-        #
-        #         for message in messages:
-        #             await self.send(text_data=json.dumps({
-        #                 'message': message.content,
-        #                 'sender': message.sender.username,
-        #                 'avatar': message.sender.avatar.url,
-        #                 'recipient': message.recipient.username
-        #             }))
-        #     except json.JSONDecodeError:
-        #         # Handle JSON decoding error
-        #         pass
-        # else:
-        #     # Handle case where 'text_data' is missing
-        #     pass
+        if 'text_data' in self.scope:
+            try:
+                text_data_json = json.loads(self.scope['text_data'])
+                sender_username = text_data_json['sender']
+                recipient_username = text_data_json['recipient']
+
+                messages = await self.get_messages(sender_username, recipient_username)
+
+                for message in messages:
+                    await self.send(text_data=json.dumps({
+                        'message': message.content,
+                        'sender': message.sender.username,
+                        'avatar': message.sender.avatar.url,
+                        'recipient': message.recipient.username
+                    }))
+            except json.JSONDecodeError:
+                pass
+        else:
+            pass
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -89,6 +87,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, sender, recipient, content):
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
+
+    @database_sync_to_async
+    def get_messages(self, sender, recipient):
+        return (MessageModel.objects.filter(sender=sender, receiver=recipient) |
+                MessageModel.objects.filter(sender=recipient, receiver=sender))
 
     async def chat_message(self, event):
         message = event['message']
