@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -65,15 +66,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
             messages = await self.fetch_messages(sender, recipient)
-            for message in messages:
+            while messages:
+                await asyncio.sleep(0.1)
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
                         'type': 'send_history',
-                        'message': message.content,
-                        'sender': message.sender.username,
-                        'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
-                        'recipient': message.receiver.username
+                        'message': messages.content,
+                        'sender': messages.sender.username,
+                        'avatar': messages.sender.avatar.url if messages.sender.avatar.url else None,
+                        'recipient': messages.receiver.username
                     }
                 )
         except Exception as e:
