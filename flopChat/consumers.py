@@ -65,7 +65,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def fetch_and_send_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            messages = await self.fetch_messages(sender, recipient)
+            try:
+                messages = await self.fetch_messages(sender, recipient)
+            except Exception as e:
+                logger.error(f"Error fetching messages: {e}")
+                return
             while messages:
                 await asyncio.sleep(0.1)
                 await self.channel_layer.group_send(
@@ -85,10 +89,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def fetch_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            messages = list(MessageModel.objects.filter(
+            messages = MessageModel.objects.filter(
                 (Q(sender=sender) & Q(receiver=recipient)) |
                 (Q(sender=recipient) & Q(receiver=sender))
-            ))
+            )
             logger.info(f"Fetched {len(messages)} messages")
             return messages
         except Exception as e:
