@@ -1,14 +1,11 @@
 import json
-import logging  # добавляем импорт logging
-
-from asgiref.sync import sync_to_async
+import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.db.models import Q
 from .models import MessageModel
 from users.models import User
 
-# Настройка логгера
 logger = logging.getLogger(__name__)
 
 
@@ -45,34 +42,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             recipient = await self.get_user(recipient_user)
 
             if message_type == 'get_users':
-                messages = await self.fetch_messages(sender, recipient)
-
-                for message in messages:
-                    await self.channel_layer.group_send(
-                        self.room_group_name,
-                        {
-                            'type': 'send_history',
-                            'message': message.content,
-                            'sender': message.sender.username,
-                            'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
-                            'recipient': message.recipient.username
-                        }
-                    )
+                await self.fetch_and_send_messages(sender, recipient)
             elif message_type == 'chat_message':
                 message = text_data_json['message']
-
                 if message and sender_user and recipient_user:
-                    await self.channel_layer.group_send(
-                        self.room_group_name,
-                        {
-                            'type': 'chat_message',
-                            'message': message,
-                            'sender': sender.username,
-                            'avatar': sender.avatar.url if sender.avatar.url else None,
-                            'recipient': recipient.username
-                        }
-                    )
-
+                    await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -87,6 +61,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Saving message from {sender} to {recipient}: {content}")
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
+    async def fetch_and_send_messages(self, sender, recipient):
+        logger.info(f"Fetching messages between {sender} and {recipient}")
+        try:
+            messages = await self.fetch_messages(sender, recipient)
+            for message in messages:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'send_history',
+                        'message': message.content,
+                        'sender': message.sender.username,
+                        'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
+                        'recipient': message.receiver.username
+                    }
+                )
+        except Exception as e:
+            logger.error(f"Error fetching and sending messages: {e}")
+
     @database_sync_to_async
     def fetch_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
@@ -100,6 +92,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error fetching messages: {e}")
             return []
+
+    async def send_chat_message(self, sender, recipient, message):
+        logger.info(f"Sending chat message from {sender} to {recipient}: {message}")
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'message': message,
+                'sender': sender.username,
+                'avatar': sender.avatar.url if sender.avatar.url else None,
+                'recipient': recipient.username
+            }
+        )
 
     async def chat_message(self, event):
         message = event['message']
