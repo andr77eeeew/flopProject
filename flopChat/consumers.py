@@ -19,9 +19,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        if 'text_data' in self.scope:
+        if 'get_users' in self.scope:
             try:
-                text_data_json = json.loads(self.scope['text_data'])
+                text_data_json = json.loads(self.scope['get_users'])
                 sender_username = text_data_json['sender']
                 recipient_username = text_data_json['recipient']
 
