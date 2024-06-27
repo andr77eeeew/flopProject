@@ -94,6 +94,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 (Q(sender=recipient) & Q(receiver=sender))
             )
             logger.info(f"Fetched {len(messages)} messages")
+            logger.info(f"Messages: {messages}")
             return messages
         except Exception as e:
             logger.error(f"Error fetching messages: {e}")
