@@ -32,15 +32,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if message_type == 'get_users':
             sender_user = text_data_json['sender']
             recipient_user = text_data_json['recipient']
+
             sender = await self.get_user(sender_user)
             recipient = await self.get_user(recipient_user)
             messages = await self.get_messages(sender, recipient)
+
             for message in messages:
                 await self.send(text_data=json.dumps({
                     'message': message.content,
-                    'sender': sender.username,
-                    'avatar': sender.avatar.url if sender.avatar.url else None,
-                    'recipient': recipient.username
+                    'sender': message.sender.username,
+                    'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
+                    'recipient': message.recipient.username
                 }))
         elif message_type == 'chat_message':
 
