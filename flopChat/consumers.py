@@ -11,6 +11,7 @@ from users.models import User
 # Настройка логгера
 logger = logging.getLogger(__name__)
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -47,12 +48,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 messages = await self.fetch_messages(sender, recipient)
 
                 for message in messages:
-                    await self.send(text_data=json.dumps({
-                        'message': message.content,
-                        'sender': message.sender.username,
-                        'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
-                        'recipient': message.recipient.username
-                    }))
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'send_history',
+                            'message': message.content,
+                            'sender': message.sender.username,
+                            'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
+                            'recipient': message.recipient.username
+                        }
+                    )
             elif message_type == 'chat_message':
                 message = text_data_json['message']
 
@@ -101,6 +106,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = event['sender']
         recipient = event['recipient']
         avatar = event['avatar']
+
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'sender': sender,
+            'avatar': avatar,
+            'recipient': recipient
+        }))
+
+    async def send_history(self, event):
+        message = event['message']
+        sender = event['sender']
+        avatar = event['avatar']
+        recipient = event['recipient']
 
         await self.send(text_data=json.dumps({
             'message': message,
