@@ -57,16 +57,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender = await self.get_user(sender_username)
             recipient = await self.get_user(recipient_username)
 
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': message,
-                    'sender': sender.username,
-                    'avatar': sender.avatar.url,
-                    'recipient': recipient.username
-                }
-            )
+            if sender.avatar:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message,
+                        'sender': sender.username,
+                        'avatar': sender.avatar.url,
+                        'recipient': recipient.username
+                    }
+                )
+            else:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message,
+                        'sender': sender.username,
+                        'avatar': None,
+                        'recipient': recipient.username
+                    }
+                )
 
             await self.save_message(sender, recipient, message)
 
