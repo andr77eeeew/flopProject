@@ -37,15 +37,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if message_type == 'get_users':
 
-            messages = await self.get_messages(sender, recipient)
+            messages = await self.fetch_messages(sender, recipient)
 
             for message in messages:
-                await self.send(text_data=json.dumps({
+                # await self.send(text_data=json.dumps({
+                #     'message': message.content,
+                #     'sender': message.sender.username,
+                #     'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
+                #     'recipient': message.recipient.username
+                # }))
+                await self.chat_message({
                     'message': message.content,
                     'sender': message.sender.username,
                     'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
                     'recipient': message.recipient.username
-                }))
+                })
         elif message_type == 'chat_message':
             message = text_data_json['message']
 
@@ -73,9 +79,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
     @database_sync_to_async
-    def get_messages(self, sender, recipient):
-        return (MessageModel.objects.filter(sender=sender, receiver=recipient) |
-                MessageModel.objects.filter(sender=recipient, receiver=sender))
+    def fetch_messages(self, sender, recipient):
+        return MessageModel.objects.filter(sender=sender, receiver=recipient) | MessageModel.objects.filter(sender=recipient, receiver=sender)
 
     async def chat_message(self, event):
         message = event['message']
