@@ -1,6 +1,7 @@
 import json
 import logging  # добавляем импорт logging
 
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.db.models import Q
@@ -46,12 +47,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 messages = await self.fetch_messages(sender, recipient)
 
                 for message in messages:
-                    await self.chat_message({
+                    await self.send(text_data=json.dumps({
                         'message': message.content,
                         'sender': message.sender.username,
                         'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
                         'recipient': message.recipient.username
-                    })
+                    }))
             elif message_type == 'chat_message':
                 message = text_data_json['message']
 
