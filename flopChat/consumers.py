@@ -68,13 +68,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             await asyncio.sleep(0.1)
             await self.send(json.dumps({
-                'type': 'chat_message',
                 'message': message.content,
                 'sender': message.sender.username,
                 'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
                 'recipient': message.receiver.username
             }))
-            logger.info(f"Sent message: {message.content}")
+            logger.info(f"Sent message: {message}")
         except Exception as e:
             logger.error(f"Error fetching and sending messages: {e}")
 
