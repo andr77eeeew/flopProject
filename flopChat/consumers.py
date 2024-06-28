@@ -65,10 +65,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
     @sync_to_async
-    def fetch_messages_sync(self, sender, recipient):
-        return self.fetch_messages(sender, recipient)
-
-    @sync_to_async
     def send_sync(self, text_data):
         return self.send(text_data=text_data)
 
@@ -89,7 +85,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def process_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            messages = await self.fetch_messages_sync(sender, recipient)
+            messages = await self.fetch_messages(sender, recipient)
             tasks = [self.process_message(message) for message in messages]
             await asyncio.gather(*tasks)
         except Exception as e:
