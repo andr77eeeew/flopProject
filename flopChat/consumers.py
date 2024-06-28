@@ -71,14 +71,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def process_message(self, message):
         try:
-            # await asyncio.sleep(0.1)
             await self.send(json.dumps({
                 'message': message.content,
                 'sender': message.sender.username,
-                'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
+                'avatar': message.sender.avatar.url if message.sender.avatar else None,
                 'recipient': message.receiver.username
             }))
-            logger.info(f"Sended message: {message}")
+            logger.info(f"Sent message: {message}")
         except Exception as e:
             logger.error(f"Error fetching and sending messages: {e}")
 
@@ -89,8 +88,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     (Q(sender=sender) & Q(receiver=recipient)) |
                     (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver'):
                 await self.process_message(message)
-                logger.info(
-                    f"Sent message: {message.content}, from {message.sender.username} and {message.sender.avatar.url} to {message.receiver.username} at {message.timestamp}")
+                logger.info(f"Sent message: {message.content}, from {message.sender.username} to {message.receiver.username} at {message.timestamp}")
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
 
@@ -102,7 +100,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'chat_message',
                 'message': message,
                 'sender': sender.username,
-                'avatar': sender.avatar.url if sender.avatar.url else None,
+                'avatar': sender.avatar.url if sender.avatar else None,
                 'recipient': recipient.username
             }
         )
@@ -125,12 +123,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             f"user_{recipient.username}",
             {
-                'type': 'send_notifications',
+                'type': 'notification',
                 'sender_id': sender.id,
-                'sender_avatar': sender.avatar.url if sender.avatar.url else None,
+                'sender_avatar': sender.avatar.url if sender.avatar else None,
                 'notification': message
             }
         )
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -158,31 +157,31 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
             message_type = text_data_json['type']
-            if message_type == 'send_notifications':
-                await self.notification_handler()
+            if message_type == 'notification':
+                await self.process_notification(self.user)
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
     @database_sync_to_async
-    def fetch_unread_messages(self):
-        logger.info(f"Fetching unread messages for {self.user.username}")
+    def fetch_unread_messages(self, user):
+        logger.info(f"Fetching unread messages for {user}")
         try:
-            unread_messages = MessageModel.objects.filter(receiver=self.user, is_read=False).select_related('sender', 'receiver')
+            unread_messages = MessageModel.objects.filter(receiver=user, is_read=False)
             logger.info(f"Fetched {unread_messages.count()} unread messages")
             return unread_messages
         except Exception as e:
             logger.error(f"Error fetching unread messages: {e}")
             return []
 
-    async def notification_handler(self):
-        logger.info(f"Processing notification for user '{self.user.username}'")
+    async def process_notification(self, user):
+        logger.info(f"Processing notification for {user}")
         try:
-            unread_messages = await self.fetch_unread_messages()
+            unread_messages = await self.fetch_unread_messages(user)
             for message in unread_messages:
                 notification = {
                     'sender_id': message.sender.id,
                     'sender_avatar': message.sender.avatar.url if message.sender.avatar else None,
-                    'notification': f"На ваш телефон пришло новое сообщение от {message.sender.username}: {message.content}"
+                    'notification': f"New message from {message.sender.username}: {message.content}"
                 }
                 await self.send_notification(notification)
                 message.is_read = True
@@ -190,13 +189,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error processing notification: {e}")
 
-    async def send_notification(self, event):
-        sender_id = event['sender_id']
-        sender_avatar = event['sender_avatar']
-        notification = event['notification']
-
+    async def send_notification(self, notification):
         await self.send(text_data=json.dumps({
-            'sender_id': sender_id,
-            'sender_avatar': sender_avatar,
-            'notification': notification
+            'type': 'notification',
+            **notification
         }))
