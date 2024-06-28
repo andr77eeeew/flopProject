@@ -55,8 +55,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if message and sender_user and recipient_user:
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
-                    await self.send_notification(recipient, sender, f"Новое сообщение от {sender.username}: {message}")
-            elif message_type =='notification':
+                    await NotificationConsumer.create_notification(recipient, sender, f"Новое сообщение от {sender.username}: {message}")
+            elif message_type == 'notification':
                 await NotificationConsumer.process_notification(self.user)
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -90,7 +90,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     (Q(sender=sender) & Q(receiver=recipient)) |
                     (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver'):
                 await self.process_message(message)
-                logger.info(f"Sent message: {message.content}, from {message.sender.username} to {message.receiver.username} at {message.timestamp}")
+                logger.info(
+                    f"Sent message: {message.content}, from {message.sender.username} to {message.receiver.username} at {message.timestamp}")
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
 
@@ -119,18 +120,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'avatar': avatar,
             'recipient': recipient
         }))
-
-    async def send_notification(self, sender, recipient, message):
-        logger.info(f"Sending notification to {recipient.username}: {message}")
-        await self.channel_layer.group_send(
-            f"user_{recipient.username}",
-            {
-                'type': 'notification',
-                'sender_id': sender.id,
-                'sender_avatar': sender.avatar.url if sender.avatar else None,
-                'notification': message
-            }
-        )
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
@@ -185,11 +174,23 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     'sender_avatar': message.sender.avatar.url if message.sender.avatar else None,
                     'notification': f"New message from {message.sender.username}: {message.content}"
                 }
-                await self.send_notification(notification)
+                await self.create_notification(message.sender, message.receiver, notification)
                 message.is_read = True
                 await database_sync_to_async(message.save)()
         except Exception as e:
             logger.error(f"Error processing notification: {e}")
+
+    async def create_notification(self, sender, recipient, message):
+        logger.info(f"Sending notification to {recipient.username}: {message}")
+        await self.channel_layer.group_send(
+            f"user_{recipient.username}",
+            {
+                'type': 'send_notification',
+                'sender_id': sender.id,
+                'sender_avatar': sender.avatar.url if sender.avatar else None,
+                'notification': message
+            }
+        )
 
     async def send_notification(self, notification):
         await self.send(text_data=json.dumps({
