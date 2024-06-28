@@ -68,6 +68,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             messages = await self.fetch_messages(sender, recipient)
             index = 0
             while index < len(messages):
+                await asyncio.sleep(0.001)
                 message = messages[index]
                 await self.channel_layer.group_send(
                     self.room_group_name,
