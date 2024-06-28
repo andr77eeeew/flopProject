@@ -64,14 +64,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Saving message from {sender} to {recipient}: {content}")
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
-    @sync_to_async
-    def send_sync(self, text_data):
-        return self.send(text_data=text_data)
-
     async def process_message(self, message):
         try:
             await asyncio.sleep(0.1)
-            await self.send_sync(json.dumps({
+            await self.send(json.dumps({
                 'type': 'chat_message',
                 'message': message.content,
                 'sender': message.sender.username,
