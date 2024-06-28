@@ -6,7 +6,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import get_user_model
 import jwt
 from django.conf import settings
-
+from urllib.parse import parse_qs
 
 @database_sync_to_async
 def get_user(user_id):
@@ -19,14 +19,12 @@ def get_user(user_id):
 
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        headers = dict(scope['headers'])
-        if 'Authorization' in headers:
+        query_params = parse_qs(scope['query_string'].decode())
+        if 'token' in query_params:
+            token_key = query_params['token'][0]
             try:
-                token_name, token_key = headers['Authorization'].split()
-                if token_name == 'Bearer':
-                    UntypedToken(token_key)
-                    decoded_data = jwt.decode(token_key, settings.SECRET_KEY, algorithms=["HS256"])
-                    scope['user'] = await get_user(decoded_data['user_id'])
+                decoded_data = jwt.decode(token_key, settings.SECRET_KEY, algorithms=["HS256"])
+                scope['user'] = await get_user(decoded_data['user_id'])
             except (InvalidToken, TokenError, jwt.DecodeError, KeyError):
                 scope['user'] = AnonymousUser()
         else:
