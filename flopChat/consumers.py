@@ -84,7 +84,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def process_message(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         messages = await self.fetch_messages(sender, recipient)
-        await asyncio.gather(*[sync_to_async(self.process_messages)(message) for message in aiter(messages)])
+        await asyncio.gather(*[sync_to_async(self.process_messages)(message) async for message in aiter(messages)])
 
     @database_sync_to_async
     def fetch_messages(self, sender, recipient):
