@@ -55,10 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if message and sender_user and recipient_user:
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
-                    notification_consumer = NotificationConsumer(self.scope)
-                    await notification_consumer.create_notification(sender, recipient, message)
-            elif message_type == 'notification':
-                await NotificationConsumer.process_notification(self.user)
+                    await self.send_chat_notification(sender, recipient, f"New message from {sender.username}: {message}")
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
@@ -122,6 +119,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'recipient': recipient
         }))
 
+    async def send_chat_notification(self, sender, recipient, notification_message):
+        logger.info(f"Sending notification to {recipient.username}: {notification_message}")
+        await self.channel_layer.group_send(
+            f"user_{recipient.username}",
+            {
+                'type': 'send_notification',
+                'sender_id': sender.id,
+                'sender_avatar': sender.avatar.url if sender.avatar else None,
+                'notification': notification_message
+            }
+        )
+
+
+    async def send_notification(self, event):
+        notification = event['notification']
+        sender_id = event['sender_id']
+        sender_avatar = event['sender_avatar']
+
+        await self.send(text_data=json.dumps({
+            'type': 'notification',
+            'sender_id': sender_id,
+            'sender_avatar': sender_avatar,
+            'notification': notification
+        }))
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -163,27 +185,33 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     'sender_avatar': message.sender.avatar.url if message.sender.avatar else None,
                     'notification': f"New message from {message.sender.username}: {message.content}"
                 }
+                await self.send_chat_notification(message.sender, message.receiver, notification)
                 logger.info(f"Sending notification: {notification}")
-                await self.create_notification(message.sender, message.receiver, notification)
                 message.is_read = True
                 await database_sync_to_async(message.save)()
         except Exception as e:
             logger.error(f"Error processing notification: {e}")
 
-    async def create_notification(self, sender, recipient, message):
-        logger.info(f"Sending notification to {recipient.username}: {message}")
+    async def send_chat_notification(self, sender, recipient, notification_message):
+        logger.info(f"Sending notification to {recipient.username}: {notification_message}")
         await self.channel_layer.group_send(
             f"user_{recipient.username}",
             {
                 'type': 'send_notification',
                 'sender_id': sender.id,
                 'sender_avatar': sender.avatar.url if sender.avatar else None,
-                'notification': message
+                'notification': notification_message
             }
         )
 
-    async def send_notification(self, notification):
+    async def send_notification(self, event):
+        notification = event['notification']
+        sender_id = event['sender_id']
+        sender_avatar = event['sender_avatar']
+
         await self.send(text_data=json.dumps({
             'type': 'notification',
-            **notification
+            'sender_id': sender_id,
+            'sender_avatar': sender_avatar,
+            'notification': notification
         }))
