@@ -56,6 +56,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
                     await self.send_notification(recipient, sender, f"Новое сообщение от {sender.username}: {message}")
+            elif message_type =='notification':
+                await NotificationConsumer.process_notification(self.user)
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
