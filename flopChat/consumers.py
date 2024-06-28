@@ -68,7 +68,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
             messages = await self.fetch_messages(sender, recipient)
-            async for message in messages:
+            async for message in iter(messages):
                 await asyncio.sleep(0.1)
                 await self.send(text_data=json.dumps(
                     {
@@ -87,10 +87,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def fetch_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            messages = list(MessageModel.objects.filter(
+            messages = MessageModel.objects.filter(
                 (Q(sender=sender) & Q(receiver=recipient)) |
                 (Q(sender=recipient) & Q(receiver=sender))
-            ))
+            )
             logger.info(f"Fetched {len(messages)} messages")
             logger.info(f"Messages: {messages}")
             return messages
