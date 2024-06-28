@@ -46,7 +46,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             recipient = await self.get_user(recipient_user)
 
             if message_type == 'get_users':
-                await self.fetch_and_send_messages(sender, recipient)
+                await self.process_message(sender, recipient)
             elif message_type == 'chat_message':
                 message = text_data_json['message']
                 if message and sender_user and recipient_user:
@@ -65,23 +65,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Saving message from {sender} to {recipient}: {content}")
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
-    async def fetch_and_send_messages(self, sender, recipient):
-        logger.info(f"Fetching messages between {sender} and {recipient}")
+    async def process_messages(self, message):
         try:
-            messages = await self.fetch_messages(sender, recipient)
-            async for message in aiter(messages):
-                await sleep(0.1)
-                await self.send(text_data=json.dumps(
+            await sleep(0.1)
+            await self.send(text_data=json.dumps(
                     {
                         'message': message.content,
                         'sender': message.sender.username,
                         'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
                         'recipient': message.receiver.username
-                    }
+                        }
+                    )
                 )
-            )
         except Exception as e:
             logger.error(f"Error fetching and sending messages: {e}")
+
+    async def process_message(self, sender, recipient):
+        logger.info(f"Fetching messages between {sender} and {recipient}")
+        messages = await self.fetch_messages(sender, recipient)
+        tasks = [self.process_messages(message) for message in messages]
+        await asyncio.gather(*tasks)
 
     @database_sync_to_async
     def fetch_messages(self, sender, recipient):
