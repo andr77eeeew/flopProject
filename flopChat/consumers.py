@@ -68,6 +68,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
             messages = await self.fetch_messages(sender, recipient)
+            messages = await sync_to_async(list)(messages)
             async for message in aiter(messages):
                 await asyncio.sleep(0.1)
                 await self.send(text_data=json.dumps(
