@@ -55,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if message and sender_user and recipient_user:
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
-                    await self.send_notofication(recipient, sender, f"Новое сообщение от {sender.username}: {message}")
+                    await self.send_notification(recipient, sender, f"Новое сообщение от {sender.username}: {message}")
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
@@ -160,7 +160,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             text_data_json = json.loads(text_data)
             message_type = text_data_json['type']
             if message_type == 'notification':
-                await self.process_notofication(self.user)
+                await self.process_notification(self.user)
         except Exception as e:
             logger.error(f"Error proccesin message: {e}")
 
@@ -176,7 +176,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error fetching unread messages: {e}")
             return []
 
-    async def process_notofication(self, user):
+    async def process_notification(self, user):
         logger.info(f"Processing notification for {user}")
         try:
             unread_message = await self.fetch_unread_messages(user)
