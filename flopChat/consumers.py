@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = 'chat_%s' % self.room_name
+        self.user = self.scope['user']
+        if self.user.is_anonymous:
+            await self.close()
+        else:
+            self.room_group_name = 'chat_%s' % self.room_name
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -51,6 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if message and sender_user and recipient_user:
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
+                    await self.send_notofication(recipient, sender, f"Новое сообщение от {sender.username}: {message}")
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
@@ -84,24 +89,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     (Q(sender=sender) & Q(receiver=recipient)) |
                     (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver'):
                 await self.process_message(message)
-                logger.info(f"Sent message: {message.content}, from {message.sender.username} and {message.sender.avatar.url} to {message.receiver.username} at {message.timestamp}")
+                logger.info(
+                    f"Sent message: {message.content}, from {message.sender.username} and {message.sender.avatar.url} to {message.receiver.username} at {message.timestamp}")
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
-
-
-    @database_sync_to_async
-    def fetch_messages(self, sender, recipient):
-        logger.info(f"Fetching messages between {sender} and {recipient}")
-        try:
-            messages = MessageModel.objects.filter(
-                (Q(sender=sender) & Q(receiver=recipient)) |
-                (Q(sender=recipient) & Q(receiver=sender))
-            ).filter()
-            logger.info(f"Fetched {messages.count()} messages")
-            return messages
-        except Exception as e:
-            logger.error(f"Error fetching messages: {e}")
-            return []
 
     async def send_chat_message(self, sender, recipient, message):
         logger.info(f"Sending chat message from {sender} to {recipient}: {message}")
@@ -127,4 +118,79 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'avatar': avatar,
             'recipient': recipient
+        }))
+
+    async def send_notification(self, sender, recipient, message):
+        logger.info(f"Sending notification to {recipient.username}: {message}")
+        await self.channel_layer.group_send(
+            f"user_{recipient.username}",
+            {
+                'type': 'notification',
+                'sender_id': sender.id,
+                'sender_avatar': sender.avatar.url if sender.avatar.url else None,
+                'notification': message
+            }
+        )
+
+
+class NotificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        if self.user.is_anonymous:
+            await self.close()
+        else:
+            self.group_name = f"user_{self.user.username}"
+            await self.channel_layer.group_add(
+                self.group_name,
+                self.channel_name
+            )
+            await self.accept()
+            logger.info(f"WebScoket connected for user '{self.user.username}'")
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.group_name,
+            self.channel_name
+        )
+        logger.info(f"WebSocket disconnected for user '{self.user.username}' with code {close_code}")
+
+    async def receive(self, text_data):
+        logger.info(f"Received message: {text_data}")
+        try:
+            text_data_json = json.loads(text_data)
+            message_type = text_data_json['type']
+            if message_type == 'notification':
+                await self.process_notofication(self.user)
+        except Exception as e:
+            logger.error(f"Error proccesin message: {e}")
+
+    @database_sync_to_async
+    def fetch_unread_messages(self, user):
+        logger.info(f"Fetching unread message for {user}")
+        try:
+            unread_messages = MessageModel.objects.filter(receive=user, is_read=False).select_related('sender',
+                                                                                                      'receiver')
+            logger.info(f"Fetched {unread_messages.count()} unread messages")
+            return unread_messages
+        except Exception as e:
+            logger.error(f"Error fetching unread messages: {e}")
+            return []
+
+    async def process_notofication(self, user):
+        logger.info(f"Processing notification for {user}")
+        try:
+            unread_message = await self.fetch_unread_messages(user)
+            for message in unread_message:
+                await self.send_notification(
+                    f"На ваш телефон пришло нвое сообщение от {message.sender.username}: {message.content}")
+                message.is_read = True
+                await database_sync_to_async(message.save)()
+        except Exception as e:
+            logger.error(f"Error processing notification: {e}")
+
+    async def send_notification(self, notification):
+        logger.info(f"Sending notification: {notification}")
+        await self.send(text_data=json.dumps({
+            'type': 'notification',
+            'notification': notification
         }))
