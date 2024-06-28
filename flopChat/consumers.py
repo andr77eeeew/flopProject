@@ -1,6 +1,8 @@
 import asyncio
 import json
 import logging
+
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.db.models import Q
@@ -69,7 +71,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             index = 0
             while index < len(messages):
                 await asyncio.sleep(0.001)
-                message = await messages[index]
+                message = await sync_to_async(messages[index])()
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
