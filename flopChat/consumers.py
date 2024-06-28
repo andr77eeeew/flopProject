@@ -55,7 +55,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if message and sender_user and recipient_user:
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
-                    await NotificationConsumer.create_notification(sender, recipient, message=f"Новое сообщение от {sender.username}: {message}")
+                    notification_consumer = NotificationConsumer(self.scope)
+                    await notification_consumer.create_notification(sender, recipient, message)
             elif message_type == 'notification':
                 await NotificationConsumer.process_notification(self.user)
         except Exception as e:
@@ -153,27 +154,16 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
-    @database_sync_to_async
-    def fetch_unread_messages(self, user):
-        logger.info(f"Fetching unread messages for {user}")
-        try:
-            unread_messages = MessageModel.objects.filter(receiver=user, is_read=False).select_related('sender')
-            logger.info(f"Fetched {unread_messages.count()} unread messages")
-            return unread_messages
-        except Exception as e:
-            logger.error(f"Error fetching unread messages: {e}")
-            return []
-
     async def process_notification(self, user):
         logger.info(f"Processing notification for {user}")
         try:
-            unread_messages = await self.fetch_unread_messages(user)
-            for message in unread_messages:
+            async for message in MessageModel.objects.filter(receiver=user, is_read=False).select_related('sender'):
                 notification = {
                     'sender_id': message.sender.id,
                     'sender_avatar': message.sender.avatar.url if message.sender.avatar else None,
                     'notification': f"New message from {message.sender.username}: {message.content}"
                 }
+                logger.info(f"Sending notification: {notification}")
                 await self.create_notification(message.sender, message.receiver, notification)
                 message.is_read = True
                 await database_sync_to_async(message.save)()
