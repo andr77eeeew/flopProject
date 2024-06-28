@@ -67,11 +67,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def process_message(self, message):
         try:
             await asyncio.sleep(0.1)
-            sender_avatar_url = await self.get_sender_avatar_url(message.sender)
             await self.send(json.dumps({
                 'message': message.content,
                 'sender': message.sender.username,
-                'avatar': sender_avatar_url,
+                'avatar': massege.sender.avatar.url if message.sender.avatar.url else None,
                 'recipient': message.receiver.username
             }))
             logger.info(f"Sended message: {message}")
@@ -85,7 +84,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     (Q(sender=sender) & Q(receiver=recipient)) |
                     (Q(sender=recipient) & Q(receiver=sender))):
                 await self.process_message(message)
-                logger.info(f"Sent message: {message.content}, from {message.sender} to {message.receiver} at {message.timestamp}")
+                logger.info(f"Sent message: {message.content}, from {message.sender.username} and {message.sender.avatar.url} to {message.receiver.username} at {message.timestamp}")
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
 
@@ -128,7 +127,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'avatar': avatar,
             'recipient': recipient
         }))
-
-    @database_sync_to_async
-    async def get_sender_avatar_url(self, sender):
-        return sender.avatar.url if sender.avatar.url else None
