@@ -85,13 +85,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def process_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            messages = await self.fetch_messages(sender, recipient)
-            tasks = [self.process_message(message) for message in messages]
-            await asyncio.gather(*tasks)
+            async for message in MessageModel.objects.filter(
+                    (Q(sender=sender) & Q(receiver=recipient)) |
+                    (Q(sender=recipient) & Q(receiver=sender))):
+                await self.process_message(message)
+                logger.info(f"Sent message: {message.content}")
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
 
-    @database_sync_to_async
+    @database_sync_to_async(thread_sensitive=True)
     def fetch_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
