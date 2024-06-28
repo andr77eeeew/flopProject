@@ -132,15 +132,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }
         )
 
-
-import json
-import logging
-from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async
-from .models import MessageModel
-
-logger = logging.getLogger(__name__)
-
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
@@ -167,7 +158,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
             message_type = text_data_json['type']
-            if message_type == 'notification':
+            if message_type == 'send_notifications':
                 await self.notification_handler()
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -191,7 +182,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 notification = {
                     'sender_id': message.sender.id,
                     'sender_avatar': message.sender.avatar.url if message.sender.avatar else None,
-                    'notification': f"New message from {message.sender.username}: {message.content}"
+                    'notification': f"На ваш телефон пришло новое сообщение от {message.sender.username}: {message.content}"
                 }
                 await self.send_notification(notification)
                 message.is_read = True
@@ -199,9 +190,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error processing notification: {e}")
 
-    async def send_notification(self, notification):
-        await self.send(text_data=json.dumps({
-            'type': 'notification',
-            **notification
-        }))
+    async def send_notification(self, event):
+        sender_id = event['sender_id']
+        sender_avatar = event['sender_avatar']
+        notification = event['notification']
 
+        await self.send(text_data=json.dumps({
+            'sender_id': sender_id,
+            'sender_avatar': sender_avatar,
+            'notification': notification
+        }))
