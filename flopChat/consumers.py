@@ -66,7 +66,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def process_message(self, message):
         try:
-            await asyncio.sleep(0.1)
+            # await asyncio.sleep(0.1)
             await self.send(json.dumps({
                 'message': message.content,
                 'sender': message.sender.username,
@@ -87,6 +87,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 logger.info(f"Sent message: {message.content}, from {message.sender.username} and {message.sender.avatar.url} to {message.receiver.username} at {message.timestamp}")
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
+
 
     @database_sync_to_async
     def fetch_messages(self, sender, recipient):
