@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import sleep
 import json
 import logging
 
@@ -67,7 +66,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def process_messages(self, message):
         try:
-            await sleep(0.1)
+            await asyncio.sleep(0.1)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -85,8 +84,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def process_message(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         messages = await self.fetch_messages(sender, recipient)
-        # tasks = [self.process_messages(message) for message in messages]
-        await asyncio.gather(*[self.process_messages(message) for message in messages])
+        await asyncio.gather(*[sync_to_async(self.process_messages)(message) for message in aiter(messages)])
 
     @database_sync_to_async
     def fetch_messages(self, sender, recipient):
