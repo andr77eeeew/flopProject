@@ -87,7 +87,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error fetching and sending messages: {e}")
 
     async def process_messages(self, sender, recipient):
-
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
             messages = await self.fetch_messages_sync(sender, recipient)
@@ -104,8 +103,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 (Q(sender=sender) & Q(receiver=recipient)) |
                 (Q(sender=recipient) & Q(receiver=sender))
             )
-            logger.info(f"Fetched {len(messages)} messages")
-            logger.info(f"Messages: {messages}")
+            logger.info(f"Fetched {messages.count()} messages")
             return messages
         except Exception as e:
             logger.error(f"Error fetching messages: {e}")
@@ -129,19 +127,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = event['sender']
         recipient = event['recipient']
         avatar = event['avatar']
-
-        await self.send(text_data=json.dumps({
-            'message': message,
-            'sender': sender,
-            'avatar': avatar,
-            'recipient': recipient
-        }))
-
-    async def send_history(self, event):
-        message = event['message']
-        sender = event['sender']
-        avatar = event['avatar']
-        recipient = event['recipient']
 
         await self.send(text_data=json.dumps({
             'message': message,
