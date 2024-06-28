@@ -45,7 +45,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             recipient = await self.get_user(recipient_user)
 
             if message_type == 'get_users':
-                await self.process_message(sender, recipient)
+                await self.process_messages(sender, recipient)
             elif message_type == 'chat_message':
                 message = text_data_json['message']
                 if message and sender_user and recipient_user:
@@ -64,29 +64,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Saving message from {sender} to {recipient}: {content}")
         return MessageModel.objects.create(sender=sender, receiver=recipient, content=content)
 
-    async def process_messages(self, message):
+    @sync_to_async
+    def fetch_messages_sync(self, sender, recipient):
+        return self.fetch_messages(sender, recipient)
+
+    @sync_to_async
+    def send_sync(self, text_data):
+        return self.send(text_data=text_data)
+
+    async def process_message(self, message):
         try:
             await asyncio.sleep(0.1)
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                        'type': 'chat_message',
-                        'message': message.content,
-                        'sender': message.sender.username,
-                        'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
-                        'recipient': message.receiver.username
-                }
-            )
+            await self.send_sync(json.dumps({
+                'type': 'chat_message',
+                'message': message.content,
+                'sender': message.sender.username,
+                'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
+                'recipient': message.receiver.username
+            }))
             logger.info(f"Sent message: {message.content}")
         except Exception as e:
             logger.error(f"Error fetching and sending messages: {e}")
 
-    async def process_message(self, sender, recipient):
+    async def process_messages(self, sender, recipient):
 
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            messages = await self.fetch_messages(sender, recipient)
-            await asyncio.gather(*[await self.process_messages(message) for message in messages])
+            messages = await self.fetch_messages_sync(sender, recipient)
+            tasks = [self.process_message(message) for message in messages]
+            await asyncio.gather(*tasks)
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
 
@@ -94,10 +100,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def fetch_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            messages = list(MessageModel.objects.filter(
+            messages = MessageModel.objects.filter(
                 (Q(sender=sender) & Q(receiver=recipient)) |
                 (Q(sender=recipient) & Q(receiver=sender))
-            ))
+            )
             logger.info(f"Fetched {len(messages)} messages")
             logger.info(f"Messages: {messages}")
             return messages
