@@ -68,15 +68,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
             messages = await self.fetch_messages(sender, recipient)
-            while messages:
+            async for message in messages:
                 await asyncio.sleep(0.1)
                 await self.send(text_data=json.dumps(
                     {
                         'type': 'send_history',
-                        'message': messages['content'].content,
-                        'sender': messages['sender'].sender.username,
-                        'avatar': messages['sender'].sender.avatar.url if messages.sender.avatar.url else None,
-                        'recipient': messages['receiver'].receiver.username
+                        'message': message.content,
+                        'sender': message.sender.username,
+                        'avatar': message.sender.avatar.url if messages.sender.avatar.url else None,
+                        'recipient': message.receiver.username
                     }
                 )
             )
