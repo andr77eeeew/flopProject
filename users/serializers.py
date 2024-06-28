@@ -33,10 +33,16 @@ class LoginSerializer(serializers.Serializer):
         username = data.get('username')
         password = data.get('password')
 
-        user = authenticate(username=username, password=password)
+        if username and password:
+            user = authenticate(username=username, password=password)
 
-        if not user:
-            raise serializers.ValidationError("Invalid username or password")
+            if user:
+                if not user.is_active:
+                    raise serializers.ValidationError(_('User is deactivated.'))
+            else:
+                raise serializers.ValidationError(_('Invalid login credentials.'))
+        else:
+            raise serializers.ValidationError(_('Must include "username" and "password".'))
 
         data['user'] = user
         return data

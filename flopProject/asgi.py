@@ -11,6 +11,10 @@ import os
 import django
 from pathlib import Path
 
+from channels.security.websocket import AllowedHostsOriginValidator
+
+from flopChat.middleware import JWTAuthMiddleware
+
 # Укажите путь к вашему файлу settings.py
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'flopProject.settings')
 
@@ -19,14 +23,15 @@ django.setup()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
-from channels.auth import AuthMiddlewareStack
-import flopChat.routing
+from flopChat.routing import websocket_urlpatterns
 
-application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-            URLRouter(
-                flopChat.routing.websocket_urlpatterns
+application = ProtocolTypeRouter(
+    {
+        "http": get_asgi_application(),
+        "websocket": AllowedHostsOriginValidator(
+            JWTAuthMiddleware(
+                URLRouter(websocket_urlpatterns)
             )
         ),
-    })
+    }
+)
