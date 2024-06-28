@@ -73,7 +73,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
                 'recipient': message.receiver.username
             }))
-            logger.info(f"Sent message: {message}")
+            logger.info(f"Sended message: {message}")
         except Exception as e:
             logger.error(f"Error fetching and sending messages: {e}")
 
@@ -84,7 +84,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     (Q(sender=sender) & Q(receiver=recipient)) |
                     (Q(sender=recipient) & Q(receiver=sender))):
                 await self.process_message(message)
-                logger.info(f"Sent message: {message.content}")
+                logger.info(f"Sent message: {message}")
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
 
