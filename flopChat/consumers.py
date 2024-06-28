@@ -70,7 +70,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send(json.dumps({
                 'message': message.content,
                 'sender': message.sender.username,
-                'avatar': massege.sender.avatar.url if message.sender.avatar.url else None,
+                'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
                 'recipient': message.receiver.username
             }))
             logger.info(f"Sended message: {message}")
