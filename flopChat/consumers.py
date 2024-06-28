@@ -93,14 +93,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
 
-    @database_sync_to_async(thread_sensitive=True)
+    @database_sync_to_async
     def fetch_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
             messages = MessageModel.objects.filter(
                 (Q(sender=sender) & Q(receiver=recipient)) |
                 (Q(sender=recipient) & Q(receiver=sender))
-            )
+            ).filter()
             logger.info(f"Fetched {messages.count()} messages")
             return messages
         except Exception as e:
