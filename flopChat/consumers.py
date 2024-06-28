@@ -82,7 +82,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             async for message in MessageModel.objects.filter(
                     (Q(sender=sender) & Q(receiver=recipient)) |
-                    (Q(sender=recipient) & Q(receiver=sender))):
+                    (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver'):
                 await self.process_message(message)
                 logger.info(f"Sent message: {message.content}, from {message.sender.username} and {message.sender.avatar.url} to {message.receiver.username} at {message.timestamp}")
         except Exception as e:
