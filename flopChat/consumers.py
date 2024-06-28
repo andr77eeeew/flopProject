@@ -65,23 +65,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def fetch_and_send_messages(self, sender, recipient):
         logger.info(f"Fetching messages between {sender} and {recipient}")
         try:
-            try:
-                messages = await self.fetch_messages(sender, recipient)
-            except Exception as e:
-                logger.error(f"Error fetching messages: {e}")
-                return
-            while messages:
-                await asyncio.sleep(0.1)
+            messages = await self.fetch_messages(sender, recipient)
+            index = 0
+            while index < len(messages):
+                message = messages[index]
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
                         'type': 'send_history',
-                        'message': messages.content,
-                        'sender': messages.sender.username,
-                        'avatar': messages.sender.avatar.url if messages.sender.avatar.url else None,
-                        'recipient': messages.receiver.username
+                        'message': message.content,
+                        'sender': message.sender.username,
+                        'avatar': message.sender.avatar.url if message.sender.avatar.url else None,
+                        'recipient': message.receiver.username
                     }
                 )
+                index += 1
         except Exception as e:
             logger.error(f"Error fetching and sending messages: {e}")
 
