@@ -55,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 if message and sender_user and recipient_user:
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
-                    await NotificationConsumer.create_notification(recipient, sender, f"Новое сообщение от {sender.username}: {message}")
+                    await NotificationConsumer.create_notification(sender, recipient, message=f"Новое сообщение от {sender.username}: {message}")
             elif message_type == 'notification':
                 await NotificationConsumer.process_notification(self.user)
         except Exception as e:
@@ -157,7 +157,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     def fetch_unread_messages(self, user):
         logger.info(f"Fetching unread messages for {user}")
         try:
-            unread_messages = MessageModel.objects.filter(receiver=user, is_read=False)
+            unread_messages = MessageModel.objects.filter(receiver=user, is_read=False).select_related('sender')
             logger.info(f"Fetched {unread_messages.count()} unread messages")
             return unread_messages
         except Exception as e:
