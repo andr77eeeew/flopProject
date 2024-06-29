@@ -117,7 +117,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def send_chat_notification(self, sender, recipient, notification_message):
-        logger.info(f"Sending notification to {recipient.username}: {notification_message}")
+        logger.info(f"Sending notification from {sender.username} to {recipient.username}: {notification_message}")
         await self.channel_layer.group_send(
             f"user_{recipient.username}",
             {
@@ -188,7 +188,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error processing notification: {e}")
 
     async def send_chat_notification(self, sender, recipient, notification_message):
-        logger.info(f"Sending notification to {recipient.username}: {notification_message}")
+        logger.info(f"Sending notification from {sender.username} to {recipient.username}: {notification_message}")
         await self.channel_layer.group_send(
             f"user_{recipient.username}",
             {
@@ -204,10 +204,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         notification = event['notification']
         sender_id = event['sender_id']
         sender_avatar = event['sender_avatar']
+        sender_username = event['sender_username']
 
         await self.send(text_data=json.dumps({
             'type': 'notification',
             'sender_id': sender_id,
             'sender_avatar': sender_avatar,
+            'sender_username': sender_username,
             'notification': notification
         }))
