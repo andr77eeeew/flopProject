@@ -206,7 +206,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def process_notification(self, user):
         logger.info(f"Processing notification for {user}")
         try:
-            async for message in MessageModel.objects.filter(receiver=user, is_read=False, notification_send=False).select_related('sender', 'receiver', 'notification_send'):
+            async for message in MessageModel.objects.filter(receiver=user, is_read=False, notification_send=False).select_related('sender', 'receiver'):
                 await self.send_chat_notification(message.sender, message.receiver, message.content)
                 await self.mark_notification_sent(message)
                 logger.info(f"Sending notification: {message}")
