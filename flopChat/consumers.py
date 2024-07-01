@@ -77,7 +77,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message.content,
                 'sender': message.sender.username,
                 'avatar': message.sender.avatar.url if message.sender.avatar else None,
-                'recipient': message.receiver.username
+                'recipient': message.receiver.username,
+                'is_read': message.is_read
             }))
         except Exception as e:
             logger.error(f"Error fetching and sending messages: {e}")
@@ -87,7 +88,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             async for message in MessageModel.objects.filter(
                     (Q(sender=sender) & Q(receiver=recipient)) |
-                    (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver'):
+                    (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver', 'is_read'):
                 await self.process_message(message)
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
@@ -101,7 +102,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message,
                 'sender': sender.username,
                 'avatar': sender.avatar.url if sender.avatar else None,
-                'recipient': recipient.username
+                'recipient': recipient.username,
+                'is_read': False
             }
         )
 
@@ -110,12 +112,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = event['sender']
         recipient = event['recipient']
         avatar = event['avatar']
+        is_read = event['is_read']
+
 
         await self.send(text_data=json.dumps({
             'message': message,
             'sender': sender,
             'avatar': avatar,
-            'recipient': recipient
+            'recipient': recipient,
+            'is_read': is_read
         }))
 
     @database_sync_to_async
@@ -140,7 +145,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'notification': notification_message
                 }
             )
-            await self.mark_notofication_sent(message)
+            await self.mark_notification_sent(message)
 
     @database_sync_to_async
     def mark_notification_sent(self, message):
@@ -201,7 +206,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def process_notification(self, user):
         logger.info(f"Processing notification for {user}")
         try:
-            async for message in MessageModel.objects.filter(receiver=user, is_read=False, notification_send=False).select_related('sender', 'receiver' 'notification_send'):
+            async for message in MessageModel.objects.filter(receiver=user, is_read=False, notification_send=False).select_related('sender', 'receiver', 'notification_send'):
                 await self.send_chat_notification(message.sender, message.receiver, message.content)
                 await self.mark_notification_sent(message)
                 logger.info(f"Sending notification: {message}")
