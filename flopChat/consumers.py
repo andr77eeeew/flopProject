@@ -97,7 +97,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             async for message in MessageModel.objects.filter(
                     (Q(sender=sender) & Q(receiver=recipient)) |
-                    (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver'):
+                    (Q(sender=recipient) & Q(receiver=sender))
+            ).select_related('sender', 'receiver').order_by('timestamp'):
                 await self.process_message(message)
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
