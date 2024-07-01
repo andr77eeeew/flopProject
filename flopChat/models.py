@@ -9,3 +9,4 @@ class MessageModel(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    notification_send = models.BooleanField(default=False)
