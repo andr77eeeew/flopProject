@@ -114,7 +114,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         avatar = event['avatar']
         is_read = event['is_read']
 
-
         await self.send(text_data=json.dumps({
             'message': message,
             'sender': sender,
@@ -126,10 +125,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def mark_messages_as_read(self, sender, recipient):
         logger.info(f"Marking messages as read between {sender} and {recipient}")
-        messages = MessageModel.objects.filter(
-            (Q(sender=sender) & Q(receiver=recipient) & Q(is_read=False)) |
-            (Q(sender=recipient) & Q(receiver=sender) & Q(is_read=False)))
-        messages.update(is_read=True)
+        MessageModel.objects.filter(sender=recipient, receiver=sender, is_read=False).update(is_read=True)
 
     async def send_chat_notification(self, sender, recipient, notification_message):
         message = await self.get_last_message(sender, recipient)
@@ -151,7 +147,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def mark_notification_sent(self, message):
         message.notification_send = True
         message.save()
-
 
     @database_sync_to_async
     def get_last_message(self, sender, recipient):
@@ -206,7 +201,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def process_notification(self, user):
         logger.info(f"Processing notification for {user}")
         try:
-            async for message in MessageModel.objects.filter(receiver=user, is_read=False, notification_send=False).select_related('sender', 'receiver'):
+            async for message in MessageModel.objects.filter(receiver=user, is_read=False,
+                                                             notification_send=False).select_related('sender',
+                                                                                                     'receiver'):
                 await self.send_chat_notification(message.sender, message.receiver, message.content)
                 await self.mark_notification_sent(message)
                 logger.info(f"Sending notification: {message}")
