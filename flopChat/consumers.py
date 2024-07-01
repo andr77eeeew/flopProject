@@ -58,7 +58,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.save_message(sender, recipient, message)
                     await self.send_chat_notification(sender, recipient, message)
             elif message_type == 'mark_as_read':
-                await self.mark_messages_as_read(sender, recipient)
+                marked_as_read = await self.mark_messages_as_read(sender, recipient)
+                if marked_as_read:
+                    await self.send(text_data=json.dumps({
+                        'marked_as_read': 'messages_marked_as_read',
+                        'sender': sender.username,
+                        'recipient': recipient.username,
+                    }))
+
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
@@ -126,7 +133,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def mark_messages_as_read(self, sender, recipient):
         logger.info(f"Marking messages as read between {sender} and {recipient}")
-        MessageModel.objects.filter(sender=recipient, receiver=sender, is_read=False).update(is_read=True)
+        updated_count = MessageModel.objects.filter(sender=recipient, receiver=sender, is_read=False).update(is_read=True)
+        return updated_count > 0
 
     async def send_chat_notification(self, sender, recipient, notification_message):
         message = await self.get_last_message(sender, recipient)
