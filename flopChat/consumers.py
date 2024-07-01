@@ -88,7 +88,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             async for message in MessageModel.objects.filter(
                     (Q(sender=sender) & Q(receiver=recipient)) |
-                    (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver', 'is_read'):
+                    (Q(sender=recipient) & Q(receiver=sender))).select_related('sender', 'receiver'):
                 await self.process_message(message)
         except Exception as e:
             logger.error(f"Error processing messages: {e}")
@@ -155,7 +155,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_last_message(self, sender, recipient):
-        return MessageModel.objects.filter(sender=sender, receiver=recipient).select_related('notification_send').order_by('-timestamp').first()
+        return MessageModel.objects.filter(sender=sender, receiver=recipient).order_by('-timestamp').first()
 
     async def send_notification(self, event):
         notification = event['notification']
