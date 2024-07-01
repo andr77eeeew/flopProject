@@ -56,6 +56,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     await self.send_chat_message(sender, recipient, message)
                     await self.save_message(sender, recipient, message)
                     await self.send_chat_notification(sender, recipient, message)
+            elif message_type == 'mark_as_read':
+                await self.mark_messages_as_read(sender, recipient)
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
@@ -116,18 +118,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'recipient': recipient
         }))
 
+    @database_sync_to_async
+    def mark_messages_as_read(self, sender, recipient):
+        logger.info(f"Marking messages as read between {sender} and {recipient}")
+        messages = MessageModel.objects.filter(
+            (Q(sender=sender) & Q(receiver=recipient) & Q(is_read=False)) |
+            (Q(sender=recipient) & Q(receiver=sender) & Q(is_read=False)))
+        messages.update(is_read=True)
+
     async def send_chat_notification(self, sender, recipient, notification_message):
-        logger.info(f"Sending notification from {sender.username} to {recipient.username}: {notification_message}")
-        await self.channel_layer.group_send(
-            f"user_{recipient.username}",
-            {
-                'type': 'send_notification',
-                'sender_id': sender.id,
-                'sender_avatar': sender.avatar.url if sender.avatar else None,
-                'sender_username': sender.username,
-                'notification': notification_message
-            }
-        )
+        message = await self.get_last_message(sender, recipient)
+        if not message.notification_send:
+            logger.info(f"Sending notification from {sender.username} to {recipient.username}: {notification_message}")
+            await self.channel_layer.group_send(
+                f"user_{recipient.username}",
+                {
+                    'type': 'send_notification',
+                    'sender_id': sender.id,
+                    'sender_avatar': sender.avatar.url if sender.avatar else None,
+                    'sender_username': sender.username,
+                    'notification': notification_message
+                }
+            )
+            await self.mark_notofication_sent(message)
+
+    @database_sync_to_async
+    def mark_notification_sent(self, message):
+        message.notification_send = True
+        message.save()
+
+
+    @database_sync_to_async
+    def get_last_message(self, sender, recipient):
+        return MessageModel.objects.filter(sender=sender, receiver=recipient).select_related('notification_send').order_by('-timestamp').first()
 
     async def send_notification(self, event):
         notification = event['notification']
@@ -178,12 +201,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def process_notification(self, user):
         logger.info(f"Processing notification for {user}")
         try:
-            async for message in MessageModel.objects.filter(receiver=user, is_read=False).select_related('sender',
-                                                                                                          'receiver'):
+            async for message in MessageModel.objects.filter(receiver=user, is_read=False, notification_send=False).select_related('sender', 'receiver' 'notification_send'):
                 await self.send_chat_notification(message.sender, message.receiver, message.content)
+                await self.mark_notification_sent(message)
                 logger.info(f"Sending notification: {message}")
-                message.is_read = True
-                await database_sync_to_async(message.save)()
         except Exception as e:
             logger.error(f"Error processing notification: {e}")
 
@@ -213,3 +234,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'sender_username': sender_username,
             'notification': notification
         }))
+
+    @database_sync_to_async
+    def mark_notification_sent(self, message):
+        message.notification_send = True
+        message.save()
