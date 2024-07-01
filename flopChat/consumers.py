@@ -61,9 +61,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 marked_as_read = await self.mark_messages_as_read(sender, recipient)
                 if marked_as_read:
                     await self.send(text_data=json.dumps({
-                        'marked_as_read': 'messages_marked_as_read',
+                        'type': 'messages_marked_as_read',
                         'sender': sender.username,
                         'recipient': recipient.username,
+                        'is_read': True
                     }))
 
         except Exception as e:
