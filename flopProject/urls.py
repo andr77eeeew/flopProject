@@ -31,6 +31,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('api/', include('users.urls')),
     path('flop/', include('floplegends.urls')),
+    path('chat/', include('flopChat.urls')),
 ]
 
 urlpatterns += static_and_media_urls
