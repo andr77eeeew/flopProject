@@ -135,7 +135,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def mark_messages_as_read(self, sender, recipient):
         logger.info(f"Marking messages as read between {sender} and {recipient}")
-        updated_count = MessageModel.objects.filter(sender=recipient, receiver=sender, is_read=False).update(is_read=True)
+        updated_count = MessageModel.objects.filter(sender=recipient, receiver=sender, is_read=False).update(
+            is_read=True)
         return updated_count > 0
 
     async def send_chat_notification(self, sender, recipient, notification_message):
@@ -252,3 +253,47 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     def mark_notification_sent(self, message):
         message.notification_send = True
         message.save()
+
+
+class VoiceChatConsumer(AsyncWebsocketConsumer):
+
+    async def connect(self):
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.user = self.scope['user']
+        if self.user.is_anonymous:
+            await self.close()
+        else:
+            self.room_group_name = 'chat_%s' % self.room_name
+
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+        logger.info(f"WebSocket connected for room '{self.room_name}'")
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+        logger.info(f"WebSocket disconnected for room '{self.room_name}' with code {close_code}")
+
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'message': message
+            }
+        )
+
+    async def chat_message(self, event):
+        message = event['message']
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
