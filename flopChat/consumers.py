@@ -256,22 +256,21 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
 
 class VoiceChatConsumer(AsyncWebsocketConsumer):
-
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.user = self.scope['user']
         if self.user.is_anonymous:
             await self.close()
         else:
-            self.room_group_name = 'chat_%s' % self.room_name
+            self.room_group_name = f'chat_{self.room_name}'
 
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name
+            )
 
-        await self.accept()
-        logger.info(f"WebSocket connected for room '{self.room_name}'")
+            await self.accept()
+            logger.info(f"WebSocket connected for room '{self.room_name}'")
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -298,9 +297,15 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error processing message: {e}")
 
     async def signal_message(self, event):
-        signal = event['signal']
-        sender = event['sender']
-        await self.send(text_data=json.dumps({
-            'signal': signal,
-            'sender': sender,
-        }))
+        try:
+            signal = event['signal']
+            sender = event['sender']
+
+            logger.info(f"Received signal message: signal={signal}, sender={sender}")
+
+            await self.send(text_data=json.dumps({
+                'signal': signal,
+                'sender': sender,
+            }))
+        except Exception as e:
+            logger.error(f"Error sending signal message: {e}")
