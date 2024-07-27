@@ -30,6 +30,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"WebSocket disconnected for room '{self.room_name}' with code {close_code}")
 
     async def receive(self, text_data):
+        logger.info(f"Received message: {text_data}")
         try:
             text_data_json = json.loads(text_data)
             signal = text_data_json.get('signal')
@@ -47,6 +48,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             logger.error(f"Error processing message: {e}")
 
     async def signal_message(self, event):
+        logger.info(f"Handling signal message: {event}")
         try:
             signal = event['signal']
             sender = event['sender']
