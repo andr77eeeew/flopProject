@@ -282,13 +282,13 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            signal = text_data_json.get('signal')
-            sender = text_data_json.get('sender')
+            signal = text_data_json['signal']
+            sender = text_data_json['sender']
 
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'signal_message',
+                    'type': 'chat_message',
                     'signal': signal if signal else None,
                     'sender': sender,
                 }
@@ -296,7 +296,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
-    async def signal_message(self, event):
+    async def chat_message(self, event):
         try:
             signal = event['signal']
             sender = event['sender']
