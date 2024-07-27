@@ -281,16 +281,18 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"WebSocket disconnected for room '{self.room_name}' with code {close_code}")
 
     async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        try:
+            text_data_json = json.loads(text_data)
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message
-            }
-        )
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': 'testtest'
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error processing message: {e}")
 
     async def chat_message(self, event):
         message = event['message']
