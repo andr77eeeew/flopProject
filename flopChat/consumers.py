@@ -289,7 +289,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'signal_message',
-                    'signal': signal,
+                    'signal': signal if signal else None,
                     'sender': sender,
                 }
             )
