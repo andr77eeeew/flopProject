@@ -282,8 +282,8 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            signal = text_data_json['signal']
-            sender = text_data_json['sender']
+            signal = text_data_json.get('signal')
+            sender = text_data_json.get('sender')
 
             await self.channel_layer.group_send(
                 self.room_group_name,
