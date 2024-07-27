@@ -283,19 +283,24 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
+            signal = text_data_json.get('signal')
+            sender = text_data_json.get('sender')
 
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'chat_message',
-                    'message': 'testtest'
+                    'type': 'signal_message',
+                    'signal': signal,
+                    'sender': sender,
                 }
             )
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
-    async def chat_message(self, event):
-        message = event['message']
+    async def signal_message(self, event):
+        signal = event['signal']
+        sender = event['sender']
         await self.send(text_data=json.dumps({
-            'message': message
+            'signal': signal,
+            'sender': sender,
         }))
