@@ -30,34 +30,37 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"WebSocket disconnected for room '{self.room_name}' with code {close_code}")
 
     async def receive(self, text_data):
-        logger.info(f"Received message: {text_data}")
+        logger.info(f"Получен сообщение: {text_data}")
         try:
             text_data_json = json.loads(text_data)
             signal = text_data_json.get('signal')
             sender = text_data_json.get('sender')
 
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'signal.message',
-                    'signal': signal if signal else None,
-                    'sender': sender,
-                }
-            )
+            await self.send_signal_message(self.room_group_name, signal, sender)
         except Exception as e:
-            logger.error(f"Error processing message: {e}")
+            logger.error(f"Ошибка при обработке сообщения: {e}")
+
+    async def send_signal_message(self, room_group_name, signal, sender):
+        await self.channel_layer.group_send(
+            room_group_name,
+            {
+                'type': 'signal_message',
+                'signal': signal if signal else None,
+                'sender': sender,
+            }
+        )
 
     async def signal_message(self, event):
-        logger.info(f"Handling signal message: {event}")
+        logger.info(f"Обработка сигнального сообщения: {event}")
         try:
             signal = event['signal']
             sender = event['sender']
 
-            logger.info(f"Received signal message: signal={signal}, sender={sender}")
+            logger.info(f"Получено сигнальное сообщение: signal={signal}, sender={sender}")
 
-            await self.send(text_data=json.dumps({
-                'signal': signal,
-                'sender': sender,
-            }))
+            await self.send_signal_message(self.room_group_name, signal, sender)
         except Exception as e:
-            logger.error(f"Error sending signal message: {e}")
+            logger.error(f"Ошибка при отправке сигнального сообщения: {e}")
+
+    async def signal_message_handler(self, event):
+        await self.signal_message(event)
