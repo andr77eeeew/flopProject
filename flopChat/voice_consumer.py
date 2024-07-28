@@ -4,7 +4,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 logger = logging.getLogger(__name__)
 
-
 class VoiceChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -74,6 +73,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Получен оффер: offer={sdp}")
 
         await self.send(json.dumps({
+            'type': 'offer',
             'sdp': sdp,
         }))
 
@@ -93,6 +93,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             logger.info(f"Получен ICE кандидат: candidate={candidate}")
 
             await self.send(json.dumps({
+                'type': 'ice_candidate',
                 'candidate': candidate,
             }))
         except Exception as e:
@@ -106,12 +107,13 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
 
             logger.info(f"Получено сигнальное сообщение: signal={signal}, sender={sender}")
 
-            await self.send_signal_message(self.room_group_name, signal, sender)
+            await self.send(json.dumps({
+                'type': 'signal',
+                'signal': signal,
+                'sender': sender,
+            }))
         except Exception as e:
             logger.error(f"Ошибка при отправке сигнального сообщения: {e}")
-
-    async def signal_message_handler(self, event):
-        await self.signal_message(event)
 
     async def send_answer(self, room_group_name, answer):
         await self.channel_layer.group_send(
@@ -127,5 +129,6 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Получен ответ: sdp={sdp}")
 
         await self.send(json.dumps({
+            'type': 'answer',
             'sdp': sdp,
         }))
