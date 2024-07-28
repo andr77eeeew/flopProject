@@ -39,7 +39,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'signal_message',
+                    'type': 'signal.message',
                     'signal': signal if signal else None,
                     'sender': sender,
                 }
