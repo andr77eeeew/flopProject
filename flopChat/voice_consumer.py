@@ -33,18 +33,18 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         logger.info(f"Получен сообщение: {text_data}")
         try:
             text_data_json = json.loads(text_data)
-            type = text_data_json.get('type')
-            if type == 'signal':
+            _type = text_data_json.get('type')
+            if _type == 'signal':
                 signal = text_data_json.get('signal')
                 sender = text_data_json.get('sender')
                 await self.send_signal_message(self.room_group_name, signal, sender)
-            elif type == 'ice_candidate':
+            elif _type == 'ice_candidate':
                 candidate = text_data_json.get('candidate')
                 await self.send_ice_candidate(self.room_group_name, candidate)
-            elif type == 'offer':
+            elif _type == 'offer':
                 offer = text_data_json.get('offer')
                 await self.send_offer(self.room_group_name, offer)
-            elif type == 'answer':
+            elif _type == 'answer':
                 answer = text_data_json.get('answer')
                 await self.send_answer(self.room_group_name, answer)
         except Exception as e:
@@ -65,7 +65,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             room_group_name,
             {
                 'type': 'send_offer',
-                'sdp': offer,
+                'offer': offer,
             }
         )
 
@@ -83,7 +83,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             room_group_name,
             {
                 'type': 'send_answer',
-                'sdp': answer,
+                'answer': answer,
             }
         )
 
@@ -113,16 +113,16 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                     'sender': sender,
                 }))
             elif _type == 'send_offer':
-                offer = event['sdp']
+                offer = event['offer']
                 logger.info(f"Получен оффер: offer={offer}")
                 await self.send(json.dumps({
-                    'sdp': offer,
+                    'offer': offer,
                 }))
             elif _type == 'send_answer':
-                answer = event['sdp']
+                answer = event['answer']
                 logger.info(f"Получен ответ: answer={answer}")
                 await self.send(json.dumps({
-                    'sdp': answer,
+                    'answer': answer,
                 }))
         except Exception as e:
             logger.error(f"Ошибка при отправке сигнального сообщения: {e}")
