@@ -41,10 +41,10 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                 candidate = text_data_json.get('candidate')
                 await self.send_ice_candidate(self.room_group_name, candidate)
             elif _type == 'offer':
-                offer = text_data_json.get('offer')
+                offer = text_data_json.get('sdp')
                 await self.send_offer(self.room_group_name, offer)
             elif _type == 'answer':
-                answer = text_data_json.get('answer')
+                answer = text_data_json.get('sdp')
                 await self.send_answer(self.room_group_name, answer)
         except Exception as e:
             logger.error(f"Ошибка при обработке сообщения: {e}")
