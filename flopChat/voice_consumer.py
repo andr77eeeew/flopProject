@@ -36,22 +36,24 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             if _type == 'signal':
                 signal = text_data_json.get('signal')
                 sender = text_data_json.get('sender')
-                await self.send_signal_message(self.room_group_name, signal, sender)
+                await self.send_signal_message(signal, sender)
             elif _type == 'ice_candidate':
                 candidate = text_data_json.get('candidate')
-                await self.send_ice_candidate(self.room_group_name, candidate)
+                await self.send_ice_candidate(candidate)
             elif _type == 'offer':
-                offer = text_data_json.get('sdp')
-                await self.send_offer(self.room_group_name, offer)
+                sdp_offer = text_data_json.get('sdp')
+                logger.info(f"Получен оффер: {sdp_offer}")
+                await self.send_offer(sdp_offer)
             elif _type == 'answer':
-                answer = text_data_json.get('sdp')
-                await self.send_answer(self.room_group_name, answer)
+                sdp_answer = text_data_json.get('sdp')
+                logger.info(f"Получен ответ: {sdp_answer}")
+                await self.send_answer(sdp_answer)
         except Exception as e:
             logger.error(f"Ошибка при обработке сообщения: {e}")
 
-    async def send_signal_message(self, room_group_name, signal, sender):
+    async def send_signal_message(self, signal, sender):
         await self.channel_layer.group_send(
-            room_group_name,
+            self.room_group_name,
             {
                 'type': 'signal_message',
                 'signal': signal if signal else None,
@@ -59,30 +61,30 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    async def send_offer(self, room_group_name, offer):
+    async def send_offer(self, sdp):
         await self.channel_layer.group_send(
-            room_group_name,
+            self.room_group_name,
             {
                 'type': 'send_offer',
-                'offer': offer,
+                'offer': sdp if sdp else None,
             }
         )
 
-    async def send_ice_candidate(self, room_group_name, candidate):
+    async def send_ice_candidate(self, candidate):
         await self.channel_layer.group_send(
-            room_group_name,
+            self.room_group_name,
             {
                 'type': 'ice_candidate',
                 'candidate': candidate,
             }
         )
 
-    async def send_answer(self, room_group_name, answer):
+    async def send_answer(self, sdp):
         await self.channel_layer.group_send(
-            room_group_name,
+            self.room_group_name,
             {
                 'type': 'send_answer',
-                'answer': answer,
+                'answer': sdp if sdp else None,
             }
         )
 
