@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class VoiceChatConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.user = self.scope['user']
@@ -55,7 +56,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
-                        'type': 'web_rtc_message    ',
+                        'type': 'web_rtc_message',
                         'sdp': sdp if sdp else None,
                     }
                 )
