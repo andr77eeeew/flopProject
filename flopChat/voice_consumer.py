@@ -55,7 +55,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
-                        'type': 'web_rts_message',
+                        'type': 'web_rtc_message    ',
                         'sdp': sdp if sdp else None,
                     }
                 )
