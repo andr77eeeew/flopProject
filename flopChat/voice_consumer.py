@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 logger = logging.getLogger(__name__)
 
+
 class VoiceChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -68,21 +69,21 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    async def offer(self, event):
-        sdp = event['sdp']
-        logger.info(f"Получен оффер: offer={sdp}")
-
-        await self.send(json.dumps({
-            'type': 'offer',
-            'sdp': sdp,
-        }))
-
     async def send_ice_candidate(self, room_group_name, candidate):
         await self.channel_layer.group_send(
             room_group_name,
             {
                 'type': 'ice_candidate',
                 'candidate': candidate,
+            }
+        )
+
+    async def send_answer(self, room_group_name, answer):
+        await self.channel_layer.group_send(
+            room_group_name,
+            {
+                'type': 'answer',
+                'sdp': answer,
             }
         )
 
@@ -99,36 +100,31 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Ошибка при отправке ICE кандидата: {e}")
 
-    async def signal_message(self, event):
+    async def chat_message(self, event):
         logger.info(f"Обработка сигнального сообщения: {event}")
         try:
-            signal = event['signal']
-            sender = event['sender']
-
-            logger.info(f"Получено сигнальное сообщение: signal={signal}, sender={sender}")
-
-            await self.send(json.dumps({
-                'type': 'signal',
-                'signal': signal,
-                'sender': sender,
-            }))
+            _type = event['type']
+            if _type == 'signal_message':
+                signal = event['signal']
+                sender = event['sender']
+                logger.info(f"Получено сигнальное сообщение: signal={signal}, sender={sender}")
+                await self.send(json.dumps({
+                    'signal': signal,
+                    'sender': sender,
+                }))
+            elif _type == 'offer':
+                offer = event['sdp']
+                logger.info(f"Получен оффер: offer={offer}")
+                await self.send(json.dumps({
+                    'type': 'offer',
+                    'sdp': offer,
+                }))
+            elif _type == 'answer':
+                answer = event['sdp']
+                logger.info(f"Получен ответ: answer={answer}")
+                await self.send(json.dumps({
+                    'type': 'answer',
+                    'sdp': answer,
+                }))
         except Exception as e:
             logger.error(f"Ошибка при отправке сигнального сообщения: {e}")
-
-    async def send_answer(self, room_group_name, answer):
-        await self.channel_layer.group_send(
-            room_group_name,
-            {
-                'type': 'answer',
-                'sdp': answer,
-            }
-        )
-
-    async def answer(self, event):
-        sdp = event['sdp']
-        logger.info(f"Получен ответ: sdp={sdp}")
-
-        await self.send(json.dumps({
-            'type': 'answer',
-            'sdp': sdp,
-        }))
