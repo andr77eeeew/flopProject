@@ -64,7 +64,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             room_group_name,
             {
-                'type': 'offer',
+                'type': 'send_offer',
                 'sdp': offer,
             }
         )
@@ -82,7 +82,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             room_group_name,
             {
-                'type': 'answer',
+                'type': 'send_answer',
                 'sdp': answer,
             }
         )
@@ -112,18 +112,16 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                     'signal': signal,
                     'sender': sender,
                 }))
-            elif _type == 'offer':
+            elif _type == 'send_offer':
                 offer = event['sdp']
                 logger.info(f"Получен оффер: offer={offer}")
                 await self.send(json.dumps({
-                    'type': 'offer',
                     'sdp': offer,
                 }))
-            elif _type == 'answer':
+            elif _type == 'send_answer':
                 answer = event['sdp']
                 logger.info(f"Получен ответ: answer={answer}")
                 await self.send(json.dumps({
-                    'type': 'answer',
                     'sdp': answer,
                 }))
         except Exception as e:
