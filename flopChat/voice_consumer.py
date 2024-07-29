@@ -4,7 +4,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 logger = logging.getLogger(__name__)
 
-
 class VoiceChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
@@ -109,6 +108,7 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                 sender = event['sender']
                 logger.info(f"Получено сигнальное сообщение: signal={signal}, sender={sender}")
                 await self.send(json.dumps({
+                    'type': 'signal_message',
                     'signal': signal,
                     'sender': sender,
                 }))
@@ -116,12 +116,14 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                 offer = event['offer']
                 logger.info(f"Получен оффер: offer={offer}")
                 await self.send(json.dumps({
+                    'type': 'send_offer',
                     'offer': offer,
                 }))
             elif _type == 'send_answer':
                 answer = event['answer']
                 logger.info(f"Получен ответ: answer={answer}")
                 await self.send(json.dumps({
+                    'type': 'send_answer',
                     'answer': answer,
                 }))
         except Exception as e:
