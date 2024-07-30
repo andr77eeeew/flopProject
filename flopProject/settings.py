@@ -147,7 +147,7 @@ ASGI_APPLICATION = 'flopProject.asgi.application'
 
 
 # КТО ТРОНЕТ У ТОГО ОТВАЛИТСЯ ХУЙ
-redis_url = "rediss://default:AVNS_dHXQa4lH171fEET3wWw@caching-19431734-flopbase.g.aivencloud.com:16113"
+redis_url = os.environ.get('REDIS_URL')
 
 CHANNEL_LAYERS = {
     'default': {
