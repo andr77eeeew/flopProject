@@ -149,7 +149,7 @@ ASGI_APPLICATION = 'flopProject.asgi.application'
 
 # КТО ТРОНЕТ У ТОГО ОТВАЛИТСЯ ХУЙ
 redis_uri = "redis://default:AVNS_dHXQa4lH171fEET3wWw@caching-19431734-flopbase.g.aivencloud.com:16113"
-redis_url = str(redis.from_url(redis_uri))
+redis_url = redis.Redis.from_url(redis_uri)
 
 CHANNEL_LAYERS = {
     'default': {
