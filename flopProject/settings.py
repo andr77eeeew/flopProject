@@ -2,6 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 import dj_database_url
+import redis
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -147,7 +148,8 @@ ASGI_APPLICATION = 'flopProject.asgi.application'
 
 
 # КТО ТРОНЕТ У ТОГО ОТВАЛИТСЯ ХУЙ
-redis_url = os.environ.get('REDIS_URL')
+redis_uri = "redis://default:AVNS_dHXQa4lH171fEET3wWw@caching-19431734-flopbase.g.aivencloud.com:16113"
+redis_url = redis.from_url(redis_uri)
 
 CHANNEL_LAYERS = {
     'default': {
