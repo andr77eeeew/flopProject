@@ -1,10 +1,7 @@
-import asyncio
 import json
 import logging
 
-from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.testing import ApplicationCommunicator
 from channels.db import database_sync_to_async
 from django.db.models import Q
 from .models import MessageModel
