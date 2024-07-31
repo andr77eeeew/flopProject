@@ -42,24 +42,24 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             elif _type == 'ice_candidate':
                 candidate = text_data_json.get('candidate')
                 await self.send_ice_candidate(candidate)
-            # elif _type == 'offer':
-            #     sdp_offer = text_data_json.get('sdp')
-            #     logger.info(f"Получен оффер: {sdp_offer}")
-            #     await self.send_offer(sdp_offer)
-            # elif _type == 'answer':
-            #     sdp_answer = text_data_json.get('sdp')
-            #     logger.info(f"Получен ответ: {sdp_answer}")
-            #     await self.send_answer(sdp_answer)
-            elif _type == 'offer' or _type == 'answer':
-                sdp = text_data_json.get('sdp')
-                logger.info(f"Получен оффер или ответ: {sdp}")
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'web_rtc_message',
-                        'sdp': sdp if sdp else None,
-                    }
-                )
+            elif _type == 'offer':
+                sdp_offer = text_data_json.get('sdp')
+                logger.info(f"Получен оффер: {sdp_offer}")
+                await self.send_offer(sdp_offer)
+            elif _type == 'answer':
+                sdp_answer = text_data_json.get('sdp')
+                logger.info(f"Получен ответ: {sdp_answer}")
+                await self.send_answer(sdp_answer)
+            # elif _type == 'offer' or _type == 'answer':
+            #     sdp = text_data_json.get('sdp')
+            #     logger.info(f"Получен оффер или ответ: {sdp}")
+            #     await self.channel_layer.group_send(
+            #         self.room_group_name,
+            #         {
+            #             'type': 'web_rtc_message',
+            #             'sdp': sdp if sdp else None,
+            #         }
+            #     )
         except Exception as e:
             logger.error(f"Ошибка при обработке сообщения: {e}")
 
@@ -73,14 +73,14 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    # async def send_offer(self, sdp):
-    #     await self.channel_layer.group_send(
-    #         self.room_group_name,
-    #         {
-    #             'type': 'send_offer',
-    #             'offer': sdp if sdp else None,
-    #         }
-    #     )
+    async def send_offer(self, sdp):
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'send_offer',
+                'offer': sdp if sdp else None,
+            }
+        )
 
     async def send_ice_candidate(self, candidate):
         await self.channel_layer.group_send(
@@ -91,14 +91,14 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    # async def send_answer(self, sdp):
-    #     await self.channel_layer.group_send(
-    #         self.room_group_name,
-    #         {
-    #             'type': 'send_answer',
-    #             'answer': sdp if sdp else None,
-    #         }
-    #     )
+    async def send_answer(self, sdp):
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'send_answer',
+                'answer': sdp if sdp else None,
+            }
+        )
 
     async def ice_candidate(self, event):
         logger.info(f"Обработка ICE кандидата: {event}")
@@ -126,25 +126,25 @@ class VoiceChatConsumer(AsyncWebsocketConsumer):
                     'signal': signal,
                     'sender': sender,
                 }))
-            # elif _type == 'send_offer':
-            #     offer = event['offer']
-            #     logger.info(f"Получен оффер: offer={offer}")
-            #     await self.send(json.dumps({
-            #         'type': 'send_offer',
-            #         'offer': offer,
-            #     }))
-            # elif _type == 'send_answer':
-            #     answer = event['answer']
-            #     logger.info(f"Получен ответ: answer={answer}")
-            #     await self.send(json.dumps({
-            #         'type': 'send_answer',
-            #         'answer': answer,
-            #     }))
+            elif _type == 'send_offer':
+                offer = event['offer']
+                logger.info(f"Получен оффер: offer={offer}")
+                await self.send(json.dumps({
+                    'type': 'offer',
+                    'offer': offer,
+                }))
+            elif _type == 'send_answer':
+                answer = event['answer']
+                logger.info(f"Получен ответ: answer={answer}")
+                await self.send(json.dumps({
+                    'type': 'answer',
+                    'answer': answer,
+                }))
         except Exception as e:
             logger.error(f"Ошибка при отправке сигнального сообщения: {e}")
 
-    async def web_rtc_message(self, event):
-        logger.info(f"Обработка сигнального сообщения: {event}")
-        message = event['sdp']
-
-        await self.send(text_data=json.dumps(message))
+    # async def web_rtc_message(self, event):
+    #     logger.info(f"Обработка сигнального сообщения: {event}")
+    #     message = event['sdp']
+    #
+    #     await self.send(text_data=json.dumps(message))
