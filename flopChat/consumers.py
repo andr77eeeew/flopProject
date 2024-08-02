@@ -204,6 +204,9 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             message_type = text_data_json['type']
             if message_type == 'notification':
                 await self.process_notification(self.user)
+            elif message_type == 'call_notification':
+                sender = text_data_json['sender']
+                await self.send_call_notification(self.user, sender)
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
@@ -250,5 +253,29 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     def mark_notification_sent(self, message):
         message.notification_send = True
         message.save()
+
+    async def send_call_notification(self, recipient, sender):
+        logger.info(f"Sending call notification from {sender.username} to {recipient.username}")
+        await self.channel_layer.group_send(
+            f"user_{recipient.username}",
+            {
+                'type': 'call_notification',
+                'sender_id': sender.id,
+                'sender_avatar': sender.avatar.url if sender.avatar else None,
+                'sender_username': sender.username
+            }
+        )
+
+    async def call_notification(self, event):
+        sender_id = event['sender_id']
+        sender_avatar = event['sender_avatar']
+        sender_username = event['sender_username']
+
+        await self.send(text_data=json.dumps({
+            'type': 'call_notification',
+            'sender_id': sender_id,
+            'sender_avatar': sender_avatar,
+            'sender_username': sender_username
+        }))
 
 
