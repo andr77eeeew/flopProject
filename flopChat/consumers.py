@@ -63,6 +63,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'recipient': recipient.username,
                         'is_read': True
                     }))
+            elif message_type == 'call_notification':
+                await self.send_call_notification(sender, recipient)
 
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -175,6 +177,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'notification': notification
         }))
 
+    async def send_call_notification(self, sender, recipient):
+        logger.info(f"Sending call notification from {sender.username} to {recipient.username}")
+        await self.channel_layer.group_send(
+            f"user_{recipient.username}",
+            {
+                'type': 'call_notification',
+                'sender_id': sender.id,
+                'sender_avatar': sender.avatar.url if sender.avatar else None,
+                'sender_username': sender.username
+            }
+        )
+
+    async def call_notification(self, event):
+        sender_id = event['sender_id']
+        sender_avatar = event['sender_avatar']
+        sender_username = event['sender_username']
+
+        await self.send(text_data=json.dumps({
+            'type': 'call_notification',
+            'sender_id': sender_id,
+            'sender_avatar': sender_avatar,
+            'sender_username': sender_username
+        }))
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -277,5 +303,3 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'sender_avatar': sender_avatar,
             'sender_username': sender_username
         }))
-
-
